@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fikashop-gateway"
+version = "0.1.0"
+description = "Webhook verification utilities for fikashop payment-gateway integrations"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+
+[project.optional-dependencies]
+dev = ["pytest>=7.0"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["fikashop_gateway*"]
+
+[tool.pytest.ini_options]
+testpaths = ["../../tests/python"]

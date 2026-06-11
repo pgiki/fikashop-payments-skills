@@ -1,0 +1,27 @@
+{
+  "name": "@fikashop/payment-gateway-client",
+  "version": "0.1.0",
+  "description": "Client SDK for fikashop-api payment-gateway proxy integrations",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "apisauce": "^3.2.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.7.2",
+    "vitest": "^3.0.0"
+  }
+}

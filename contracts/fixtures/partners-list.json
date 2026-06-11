@@ -1,0 +1,23 @@
+{
+  "count": 2,
+  "next": null,
+  "previous": null,
+  "results": [
+    {
+      "id": 15,
+      "code": "my-new-shop",
+      "name": "My New Shop",
+      "phone_number": "+255700000001",
+      "is_active": true,
+      "wallet_id": "8842"
+    },
+    {
+      "id": 42,
+      "code": "acme-mobility",
+      "name": "Acme Mobility",
+      "phone_number": "+255712345678",
+      "is_active": true,
+      "wallet_id": "9011"
+    }
+  ]
+}

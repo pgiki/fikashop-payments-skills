@@ -1,0 +1,37 @@
+{
+  "uuid": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "number": "INV-2026-0042",
+  "status": "open",
+  "currency": "TZS",
+  "balance": "15000.00",
+  "from_address": "Fikachu Mobility\nsupport@fikachu.com",
+  "public_pay_blocked": false,
+  "payment_methods": [
+    {
+      "code": "mpesa",
+      "name": "M-Pesa",
+      "description": "Pay with mobile money",
+      "input_fields": [
+        {
+          "code": "billing_phone",
+          "label": "M-Pesa phone number",
+          "type": "text",
+          "is_required": true,
+          "help_text": "Enter the number that will receive the STK push"
+        }
+      ]
+    },
+    {
+      "code": "card",
+      "name": "Card",
+      "input_fields": [
+        {
+          "code": "accept_terms",
+          "label": "I accept the card processing terms",
+          "type": "checkbox",
+          "is_required": true
+        }
+      ]
+    }
+  ]
+}

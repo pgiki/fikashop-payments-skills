@@ -1,0 +1,29 @@
+{
+  "wallet_id": "wlt_driver_001",
+  "balance": "45250.00",
+  "payment_methods": [
+    {
+      "code": "wallet",
+      "name": "Wallet balance",
+      "description": "Pay from existing wallet balance"
+    },
+    {
+      "code": "mpesa",
+      "name": "M-Pesa",
+      "description": "Mobile money",
+      "input_fields": [
+        {
+          "name": "billing_phone",
+          "label": "Billing phone",
+          "type": "text",
+          "required": true
+        }
+      ]
+    },
+    {
+      "code": "card",
+      "name": "Card",
+      "description": "Debit or credit card"
+    }
+  ]
+}

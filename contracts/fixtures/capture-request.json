@@ -1,0 +1,7 @@
+{
+  "action": "capture",
+  "input_fields": {
+    "billing_phone": "+255712345678",
+    "accept_terms": true
+  }
+}

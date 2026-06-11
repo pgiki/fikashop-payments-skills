@@ -1,0 +1,9 @@
+{
+  "total": "10000.00",
+  "variant": "mpesa",
+  "currency": "TZS",
+  "description": "Driver wallet top up",
+  "input_fields": {
+    "billing_phone": "+255712345678"
+  }
+}

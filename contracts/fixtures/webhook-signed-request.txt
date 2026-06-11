@@ -1,0 +1,6 @@
+# Signed webhook example (secret: test-secret)
+# Body (exact bytes):
+{"invoice_id": "ext-inv-123", "status": "paid"}
+
+# Compute signature:
+# python -c "import hmac,hashlib; print(hmac.new(b'test-secret', b'{\"invoice_id\": \"ext-inv-123\", \"status\": \"paid\"}', hashlib.sha256).hexdigest())"
