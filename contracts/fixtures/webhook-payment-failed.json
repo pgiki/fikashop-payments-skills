@@ -1,0 +1,6 @@
+{
+  "invoice_id": "ext-inv-rider-8842",
+  "status": "failed",
+  "event_id": "evt_20260311_failed_001",
+  "detail": "Payment declined by provider"
+}

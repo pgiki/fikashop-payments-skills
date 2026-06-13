@@ -1,0 +1,11 @@
+{
+  "status": "redirect",
+  "redirect_url": "https://checkout.snippe.com/session/ch_3NxKp2Lk8vQm9sTf0wY1zAbC",
+  "detail": "You will be redirected to a checkout page to complete your payment",
+  "meta": {
+    "invoice_uuid": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "input_fields": {
+      "accept_terms": true
+    }
+  }
+}

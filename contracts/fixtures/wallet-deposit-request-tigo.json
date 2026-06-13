@@ -1,0 +1,9 @@
+{
+  "total": "25000.00",
+  "variant": "tigo_pesa",
+  "currency": "TZS",
+  "description": "Wallet recharge from subscriptions",
+  "input_fields": {
+    "billing_phone": "+255765432100"
+  }
+}

@@ -5,19 +5,27 @@
   "results": [
     {
       "id": 15,
+      "url": "https://api.fikashop.app/shop/api/admin/partners/15/",
       "code": "my-new-shop",
       "name": "My New Shop",
+      "email": "owner@my-new-shop.co.tz",
       "phone_number": "+255700000001",
+      "business_type_kind": "retail",
       "is_active": true,
-      "wallet_id": "8842"
+      "is_open": true,
+      "wallet_id": "a3f2c891-0b4e-4d6a-9c1e-8f7b2d4e6a10"
     },
     {
       "id": 42,
+      "url": "https://api.fikashop.app/shop/api/admin/partners/42/",
       "code": "acme-mobility",
       "name": "Acme Mobility",
+      "email": "billing@acme-mobility.co.tz",
       "phone_number": "+255712345678",
+      "business_type_kind": "mobility",
       "is_active": true,
-      "wallet_id": "9011"
+      "is_open": true,
+      "wallet_id": "7c9e6679-7425-40de-944b-e07fc1f90ae7"
     }
   ]
 }

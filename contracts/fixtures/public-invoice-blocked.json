@@ -1,0 +1,24 @@
+{
+  "uuid": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
+  "number": "WD-2026-0012",
+  "external_invoice_reference": "ext-withdrawal-9912",
+  "status": "pending",
+  "currency": "TZS",
+  "balance": "50000.00",
+  "total": "50000.00",
+  "amount_paid": "0.00",
+  "from_address": "John Driver\ndriver@example.com",
+  "to_address": "Acme Mobility",
+  "public_pay_blocked": true,
+  "public_pay_blocked_reason": "Online payment is not available for withdrawal requests.",
+  "payment_methods": [],
+  "items": [
+    {
+      "id": 1,
+      "name": "Wallet withdrawal",
+      "quantity": "1.00",
+      "unit_cost": "50000.00",
+      "total": "50000.00"
+    }
+  ]
+}

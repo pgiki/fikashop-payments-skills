@@ -1,29 +1,84 @@
 {
-  "wallet_id": "wlt_driver_001",
-  "balance": "45250.00",
+  "wallet_id": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
+  "balance": "45250.0000",
   "payment_methods": [
     {
       "code": "wallet",
-      "name": "Wallet balance",
-      "description": "Pay from existing wallet balance"
+      "name": "Wallet",
+      "method_type": "wallet",
+      "description": "Balance: 45250.0000",
+      "image_url": null,
+      "input_fields": [],
+      "meta": {
+        "balance": "45250.0000",
+        "wallet_id": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
+        "partner": 42
+      }
     },
     {
       "code": "mpesa",
       "name": "M-Pesa",
-      "description": "Mobile money",
+      "method_type": "mobile_money",
+      "description": "Vodacom M-Pesa mobile money",
+      "image_url": "https://cdn.fikashop.app/payment-methods/mpesa.png",
       "input_fields": [
         {
-          "name": "billing_phone",
-          "label": "Billing phone",
-          "type": "text",
-          "required": true
+          "code": "billing_phone",
+          "label": "M-Pesa phone number",
+          "type": "phone_number",
+          "is_required": true,
+          "help_text": "Enter the number that will receive the STK push (e.g. +255712345678)",
+          "default_value": null,
+          "schema": {
+            "pattern": "^\\+255[0-9]{9}$"
+          }
+        }
+      ]
+    },
+    {
+      "code": "tigo_pesa",
+      "name": "Tigo Pesa",
+      "method_type": "mobile_money",
+      "description": "Tigo mobile money",
+      "image_url": "https://cdn.fikashop.app/payment-methods/tigo-pesa.png",
+      "input_fields": [
+        {
+          "code": "billing_phone",
+          "label": "Tigo Pesa phone number",
+          "type": "phone_number",
+          "is_required": true,
+          "help_text": "Phone number registered with Tigo Pesa",
+          "default_value": null,
+          "schema": null
         }
       ]
     },
     {
       "code": "card",
-      "name": "Card",
-      "description": "Debit or credit card"
+      "name": "Debit / credit card",
+      "method_type": "card",
+      "description": "Pay by card via hosted checkout",
+      "image_url": "https://cdn.fikashop.app/payment-methods/card.png",
+      "input_fields": [
+        {
+          "code": "billing_email",
+          "label": "Receipt email",
+          "type": "string",
+          "is_required": false,
+          "help_text": "Optional — receipt will be sent here",
+          "default_value": null,
+          "schema": null
+        },
+        {
+          "code": "accept_terms",
+          "label": "I accept the card processing terms",
+          "type": "checkbox",
+          "is_required": true,
+          "help_text": null,
+          "default_value": false,
+          "schema": null
+        }
+      ]
     }
   ]
 }

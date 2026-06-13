@@ -1,5 +1,7 @@
 node_modules/
 dist/
+!packages/ts/dist/
+!packages/ts/dist/**
 *.tsbuildinfo
 .coverage
 htmlcov/

@@ -2,16 +2,19 @@
 
 from __future__ import annotations
 
+# Keep in sync with contracts/status-map.json (validated in tests/python/test_status_map.py).
 FIKASHOP_STATUS_MAP: dict[str, str] = {
     "open": "pending",
     "pending": "pending",
     "processing": "pending",
     "unpaid": "pending",
+    "preauth": "pending",
     "paid": "paid",
     "settled": "paid",
     "succeeded": "paid",
     "success": "paid",
     "completed": "paid",
+    "confirmed": "paid",
     "failed": "failed",
     "failure": "failed",
     "error": "failed",

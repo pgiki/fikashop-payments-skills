@@ -1,0 +1,11 @@
+{
+  "status": "redirect",
+  "redirect_url": "https://checkout.snippe.com/session/ch_3NxKp2Lk8vQm9sTf0wY1zAbC",
+  "detail": "You will be redirected to a checkout page to complete your payment",
+  "meta": {
+    "intent": "wallet-deposit",
+    "input_fields": {
+      "billing_phone": "+255712345678"
+    }
+  }
+}

@@ -76,3 +76,57 @@ export type PartnerSummary = {
   is_active?: boolean;
   wallet_id?: string;
 };
+
+export type PlanCostSummary = {
+  id: number;
+  slug: string;
+  recurrence_period?: number;
+  recurrence_unit?: string;
+  cost?: string | number;
+  currency?: string;
+  plan_name?: string;
+  plan_description?: string;
+};
+
+export type SubscriptionPlanCatalogItem = {
+  id: number;
+  slug: string;
+  plan_name: string;
+  plan_description?: string;
+  grace_period?: number;
+  costs?: PlanCostSummary[];
+  features?: unknown[];
+};
+
+export type UserSubscription = {
+  id: string;
+  active?: boolean;
+  cancelled?: boolean;
+  date_billing_start?: string;
+  date_billing_next?: string | null;
+  subscription?: PlanCostSummary & { plan?: { slug?: string; plan_name?: string } };
+  unpaid_invoices?: unknown[];
+};
+
+export type SubscriptionListResponse = {
+  balance?: string | number;
+  subscriptions?: UserSubscription[];
+};
+
+export type SubscriptionTransaction = Record<string, unknown>;
+
+export type PaginatedResults<T> = {
+  results?: T[];
+  count?: number;
+  next?: string | null;
+  previous?: string | null;
+};
+
+export type UnifiedWebhookEnvelope = {
+  id: string;
+  type: string;
+  api_version?: string;
+  created?: number;
+  livemode?: boolean;
+  data?: { object?: Record<string, unknown> };
+};

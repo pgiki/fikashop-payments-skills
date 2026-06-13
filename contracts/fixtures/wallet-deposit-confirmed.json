@@ -1,0 +1,11 @@
+{
+  "status": "confirmed",
+  "detail": "Payment confirmed",
+  "transaction_id": "emu-tigo-20260311-001",
+  "meta": {
+    "intent": "wallet-deposit",
+    "input_fields": {
+      "billing_phone": "+255712345678"
+    }
+  }
+}

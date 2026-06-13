@@ -1,5 +1,9 @@
 {
-  "invoice_id": "ext-inv-123",
+  "invoice_id": "ext-inv-rider-8842",
   "status": "paid",
-  "event_id": "evt_20260311_001"
+  "event_id": "evt_20260311_001",
+  "amount": "15000.00",
+  "currency": "TZS",
+  "payment_method_code": "mpesa",
+  "occurred_at": "2026-03-11T14:32:05Z"
 }

@@ -1,0 +1,25 @@
+{
+  "webhook_normalize": {
+    "open": "pending",
+    "pending": "pending",
+    "processing": "pending",
+    "unpaid": "pending",
+    "preauth": "pending",
+    "paid": "paid",
+    "settled": "paid",
+    "succeeded": "paid",
+    "success": "paid",
+    "completed": "paid",
+    "confirmed": "paid",
+    "failed": "failed",
+    "failure": "failed",
+    "error": "failed",
+    "declined": "failed",
+    "canceled": "failed",
+    "cancelled": "failed",
+    "void": "failed",
+    "voided": "failed"
+  },
+  "client_success": ["confirmed", "success", "settled", "paid", "completed", "succeeded"],
+  "client_pending": ["waiting", "pending", "processing", "preauth"]
+}

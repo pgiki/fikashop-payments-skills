@@ -1,0 +1,25 @@
+{
+  "balance": "25000.0000",
+  "subscriptions": [
+    {
+      "id": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+      "active": true,
+      "cancelled": false,
+      "date_billing_start": "2026-05-01T00:00:00Z",
+      "date_billing_next": "2026-07-01T00:00:00Z",
+      "subscription": {
+        "id": 12,
+        "slug": "pro-monthly",
+        "cost": "15000.0000",
+        "currency": "TZS",
+        "recurrence_period": 1,
+        "recurrence_unit": "month",
+        "plan": {
+          "slug": "pro",
+          "plan_name": "Pro"
+        }
+      },
+      "unpaid_invoices": []
+    }
+  ]
+}

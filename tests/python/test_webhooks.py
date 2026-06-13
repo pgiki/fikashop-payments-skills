@@ -18,6 +18,8 @@ def test_normalize_payment_status():
     assert normalize_payment_status("paid") == "paid"
     assert normalize_payment_status("SETTLED") == "paid"
     assert normalize_payment_status("processing") == "pending"
+    assert normalize_payment_status("confirmed") == "paid"
+    assert normalize_payment_status("preauth") == "pending"
     assert normalize_payment_status("unknown_xyz") is None
 
 

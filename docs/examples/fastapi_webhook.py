@@ -1,29 +1,30 @@
-"""FastAPI example: fikashop payment webhook receiver."""
+"""FastAPI example: fikashop unified webhook receiver (preferred)."""
 
 from __future__ import annotations
 
-import os
-
 import json
+import os
 
 from fastapi import FastAPI, Header, Request, Response
 
-from fikashop_gateway.handler import InMemoryWebhookHandler, process_payment_webhook
+from fikashop_gateway import InMemoryUnifiedWebhookHandler, process_unified_webhook
 
 app = FastAPI()
-handler = InMemoryWebhookHandler()
+handler = InMemoryUnifiedWebhookHandler()
 SECRET = os.environ.get("BILLING_WEBHOOK_SECRET", "")
 
 
-@app.post("/billing/v1/webhooks/fikashop")
+@app.post("/webhooks/fikashop")
 async def fikashop_webhook(
     request: Request,
+    fikashop_signature: str | None = Header(default=None, alias="Fikashop-Signature"),
     x_fikachu_signature: str | None = Header(default=None, alias="X-Fikachu-Signature"),
 ):
     raw_body = await request.body()
-    result = process_payment_webhook(
+    result = process_unified_webhook(
         raw_body=raw_body,
-        signature_header=x_fikachu_signature or "",
+        fikashop_signature=fikashop_signature or "",
+        legacy_signature=x_fikachu_signature or "",
         secret=SECRET or None,
         handler=handler,
     )

@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: packages/ts/package-lock.json
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install TS dependencies
+        run: npm ci
+        working-directory: packages/ts
+
+      - name: Build TS package
+        run: npm run build
+        working-directory: packages/ts
+
+      - name: Verify dist matches src
+        run: git diff --exit-code packages/ts/dist/
+
+      - name: Run TS tests
+        run: npm test
+        working-directory: packages/ts
+
+      - name: Install Python package
+        run: pip install -e packages/python[dev]
+
+      - name: Run Python tests
+        run: pytest tests/python -q

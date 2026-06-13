@@ -1,35 +1,87 @@
 {
+  "id": 1042,
   "uuid": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
   "number": "INV-2026-0042",
-  "status": "open",
+  "external_invoice_reference": "ext-inv-rider-8842",
+  "status": "pending",
   "currency": "TZS",
+  "date": "2026-03-10T08:00:00Z",
+  "due_date": "2026-03-17T23:59:59Z",
+  "from_address": "Acme Mobility\nDar es Salaam, Tanzania\nbilling@acme-mobility.co.tz",
+  "to_address": "John Driver\n+255712345678\ndriver@example.com",
+  "payment_terms": "Pay within 7 days. Pay here: https://pay.fikashop.app/i/a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "subtotal": "15000.00",
+  "tax_value": "0.00",
+  "discounts_value": "0.00",
+  "shipping_value": "0.00",
+  "total": "15000.00",
+  "amount_paid": "0.00",
   "balance": "15000.00",
-  "from_address": "Fikachu Mobility\nsupport@fikachu.com",
+  "supports_online_payment": true,
   "public_pay_blocked": false,
+  "public_pay_blocked_reason": "",
+  "items": [
+    {
+      "id": 1,
+      "name": "Trip fare — CBD to Airport",
+      "description": "Ride #RIDE-20260310-0042",
+      "quantity": "1.00",
+      "unit_cost": "12000.00",
+      "total": "12000.00"
+    },
+    {
+      "id": 2,
+      "name": "Platform service fee",
+      "description": null,
+      "quantity": "1.00",
+      "unit_cost": "3000.00",
+      "total": "3000.00"
+    }
+  ],
   "payment_methods": [
+    {
+      "code": "wallet",
+      "name": "Wallet",
+      "method_type": "wallet",
+      "description": "Pay from wallet balance (top up first if insufficient)",
+      "image_url": null,
+      "input_fields": []
+    },
     {
       "code": "mpesa",
       "name": "M-Pesa",
-      "description": "Pay with mobile money",
+      "method_type": "mobile_money",
+      "description": "Pay with Vodacom M-Pesa",
+      "image_url": "https://cdn.fikashop.app/payment-methods/mpesa.png",
       "input_fields": [
         {
           "code": "billing_phone",
           "label": "M-Pesa phone number",
-          "type": "text",
+          "type": "phone_number",
           "is_required": true,
-          "help_text": "Enter the number that will receive the STK push"
+          "help_text": "Enter the number that will receive the STK push",
+          "default_value": null,
+          "schema": {
+            "pattern": "^\\+255[0-9]{9}$"
+          }
         }
       ]
     },
     {
       "code": "card",
-      "name": "Card",
+      "name": "Debit / credit card",
+      "method_type": "card",
+      "description": "Redirect to secure card checkout",
+      "image_url": "https://cdn.fikashop.app/payment-methods/card.png",
       "input_fields": [
         {
           "code": "accept_terms",
           "label": "I accept the card processing terms",
           "type": "checkbox",
-          "is_required": true
+          "is_required": true,
+          "help_text": null,
+          "default_value": false,
+          "schema": null
         }
       ]
     }

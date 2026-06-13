@@ -1,7 +1,43 @@
 import type { PaymentFormValues, PaymentInputField, PaymentMethod } from './types.js';
 
-export const SUCCESS_STATUSES = new Set(['confirmed', 'success', 'settled', 'paid', 'completed']);
+// Keep in sync with contracts/status-map.json (validated in tests/ts/status-map.test.ts).
+export const SUCCESS_STATUSES = new Set([
+  'confirmed',
+  'success',
+  'settled',
+  'paid',
+  'completed',
+  'succeeded',
+]);
 export const PENDING_STATUSES = new Set(['waiting', 'pending', 'processing', 'preauth']);
+
+export type NormalizedWebhookStatus = 'paid' | 'pending' | 'failed';
+
+export const WEBHOOK_STATUS_MAP: Record<string, NormalizedWebhookStatus> = {
+  open: 'pending',
+  pending: 'pending',
+  processing: 'pending',
+  unpaid: 'pending',
+  preauth: 'pending',
+  paid: 'paid',
+  settled: 'paid',
+  succeeded: 'paid',
+  success: 'paid',
+  completed: 'paid',
+  confirmed: 'paid',
+  failed: 'failed',
+  failure: 'failed',
+  error: 'failed',
+  declined: 'failed',
+  canceled: 'failed',
+  cancelled: 'failed',
+  void: 'failed',
+  voided: 'failed',
+};
+
+export function normalizeWebhookStatus(value: unknown): NormalizedWebhookStatus | null {
+  return WEBHOOK_STATUS_MAP[normalizeStatus(value)] ?? null;
+}
 
 export function normalizeStatus(value: unknown): string {
   return String(value ?? '')
@@ -85,7 +121,7 @@ export function buildDepositPayload(input: {
   variant: string;
   currency: string;
   description?: string;
-  inputFields?: Record<string, string>;
+  inputFields?: PaymentFormValues;
 }): Record<string, unknown> {
   const payload: Record<string, unknown> = {
     total: input.total,

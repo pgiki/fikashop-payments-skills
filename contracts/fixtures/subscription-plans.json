@@ -1,0 +1,28 @@
+[
+  {
+    "id": 1,
+    "slug": "pro",
+    "plan_name": "Pro",
+    "plan_description": "Full access",
+    "grace_period": 3,
+    "costs": [
+      {
+        "id": 12,
+        "slug": "pro-monthly",
+        "recurrence_period": 1,
+        "recurrence_unit": "month",
+        "cost": "15000.0000",
+        "currency": "TZS"
+      },
+      {
+        "id": 13,
+        "slug": "pro-yearly",
+        "recurrence_period": 1,
+        "recurrence_unit": "year",
+        "cost": "150000.0000",
+        "currency": "TZS"
+      }
+    ],
+    "features": []
+  }
+]

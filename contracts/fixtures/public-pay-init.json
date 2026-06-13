@@ -1,0 +1,8 @@
+{
+  "payment_reference": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+  "process_url": "/payments/process/9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08/",
+  "payment_method_code": "mpesa",
+  "invoice_uuid": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "amount": "15000.00",
+  "currency": "TZS"
+}
