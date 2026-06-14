@@ -1,0 +1,10 @@
+{
+  "detail": "Insufficient funds in wallet",
+  "feature_code": "sms_outbound",
+  "amount_charged": "0.1000",
+  "currency": "TZS",
+  "allowed": false,
+  "used": 100,
+  "remaining": 0,
+  "quota": 100
+}

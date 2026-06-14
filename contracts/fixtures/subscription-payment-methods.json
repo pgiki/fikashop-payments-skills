@@ -1,0 +1,40 @@
+[
+  {
+    "code": "mpesa",
+    "name": "M-Pesa",
+    "method_type": "mobile_money",
+    "description": "Vodacom M-Pesa mobile money",
+    "image_url": "https://cdn.fikashop.app/payment-methods/mpesa.png",
+    "input_fields": [
+      {
+        "code": "billing_phone",
+        "label": "M-Pesa phone number",
+        "type": "phone_number",
+        "is_required": true,
+        "help_text": "Enter the number that will receive the STK push (e.g. +255712345678)",
+        "default_value": null,
+        "schema": {
+          "pattern": "^\\+255[0-9]{9}$"
+        }
+      }
+    ]
+  },
+  {
+    "code": "card",
+    "name": "Debit / credit card",
+    "method_type": "card",
+    "description": "Pay by card via hosted checkout",
+    "image_url": "https://cdn.fikashop.app/payment-methods/card.png",
+    "input_fields": [
+      {
+        "code": "billing_email",
+        "label": "Receipt email",
+        "type": "string",
+        "is_required": false,
+        "help_text": "Optional — receipt will be sent here",
+        "default_value": null,
+        "schema": null
+      }
+    ]
+  }
+]

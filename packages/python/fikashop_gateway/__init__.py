@@ -13,6 +13,7 @@ from fikashop_gateway.unified_handler import (
     parse_unified_webhook,
     process_unified_webhook,
 )
+from fikashop_gateway.webhook_router import WEBHOOK_EVENT_TYPES, create_webhook_router
 from fikashop_gateway.webhooks import (
     PaymentWebhookEvent,
     UNIFIED_SIGNATURE_HEADER,
@@ -45,4 +46,6 @@ __all__ = [
     "process_unified_webhook",
     "verify_fikashop_signature",
     "verify_unified_fikashop_signature",
+    "WEBHOOK_EVENT_TYPES",
+    "create_webhook_router",
 ]

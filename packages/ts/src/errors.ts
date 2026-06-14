@@ -1,5 +1,7 @@
 import type { ApiResponse } from 'apisauce';
 
+export type GatewayFailureContext = 'wallet' | 'subscription' | 'auto';
+
 function parseDrfDetail(data: unknown): string {
   if (data == null) return '';
   if (typeof data === 'string') return data.trim().slice(0, 300);
@@ -38,4 +40,43 @@ export function formatWalletFailure(resp: ApiResponse<unknown>): string {
     return trimMessage(detail || 'Wallet API path was not found on this server.');
   }
   return trimMessage(detail || `Request failed${status != null ? ` (${status})` : ''}.`);
+}
+
+export function formatSubscriptionFailure(resp: ApiResponse<unknown>): string {
+  const problem = resp.problem;
+  if (problem === 'NETWORK_ERROR') {
+    return 'Cannot reach subscription service. Check network and partner scope (X-Partner-Id).';
+  }
+  if (problem === 'TIMEOUT_ERROR') return 'Subscription request timed out.';
+  const detail = parseDrfDetail(resp.data);
+  const status = resp.status;
+  if (status === 401 || status === 403) {
+    return trimMessage(`${detail || 'Session rejected.'} Use end-user OIDC token, not admin token.`);
+  }
+  if (status === 402) {
+    return trimMessage(detail || 'Insufficient wallet balance for this subscription action.');
+  }
+  return trimMessage(detail || `Subscription request failed${status != null ? ` (${status})` : ''}.`);
+}
+
+/** Pick wallet vs subscription formatter; use after any gateway helper returns `!resp.ok`. */
+export function formatGatewayFailure(
+  resp: ApiResponse<unknown>,
+  context: GatewayFailureContext = 'auto',
+): string {
+  const status = resp.status;
+  const data = resp.data;
+  const featureCode =
+    data && typeof data === 'object' ? (data as Record<string, unknown>).feature_code : undefined;
+
+  if (context === 'subscription' || status === 402 || featureCode != null) {
+    return formatSubscriptionFailure(resp);
+  }
+  if (context === 'wallet') {
+    return formatWalletFailure(resp);
+  }
+  if (status === 429 || status === 403 || status === 401) {
+    return formatSubscriptionFailure(resp);
+  }
+  return formatWalletFailure(resp);
 }

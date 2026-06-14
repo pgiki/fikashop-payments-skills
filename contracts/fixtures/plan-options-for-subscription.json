@@ -1,0 +1,12 @@
+[
+  {
+    "id": "e5f6a7b8-c9d0-1234-ef01-345678901234",
+    "slug": "pro-yearly",
+    "plan_name": "Pro",
+    "plan_description": "Full access",
+    "recurrence_period": 1,
+    "recurrence_unit": "year",
+    "cost": "150000.0000",
+    "currency": "TZS"
+  }
+]

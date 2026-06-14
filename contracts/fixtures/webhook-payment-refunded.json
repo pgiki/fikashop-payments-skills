@@ -1,0 +1,19 @@
+{
+  "id": "evt_payment_refunded_001",
+  "type": "payment.refunded",
+  "api_version": "2026-06-12",
+  "created": 1718196100,
+  "livemode": false,
+  "data": {
+    "object": {
+      "payment_reference": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+      "status": "refunded",
+      "variant": "mpesa",
+      "amount": "15000.00",
+      "currency": "TZS",
+      "refunded_amount": "15000.00",
+      "refund_id": "REF-001",
+      "partner_id": 42
+    }
+  }
+}

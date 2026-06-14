@@ -1,0 +1,3 @@
+{
+  "detail": "effective_mode=next_cycle is not supported yet. Use immediate or wait for a deferred plan-change implementation."
+}

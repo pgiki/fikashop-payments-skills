@@ -1,0 +1,13 @@
+{
+  "feature_code": "sms_outbound",
+  "feature_name": "SMS outbound",
+  "feature_type": "quota",
+  "allowed": false,
+  "error": "Quota exceeded",
+  "used": 100,
+  "remaining": 0,
+  "quota": 100,
+  "subscription_id": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+  "period_start": "2026-05-01T00:00:00Z",
+  "period_end": "2026-07-01T00:00:00Z"
+}

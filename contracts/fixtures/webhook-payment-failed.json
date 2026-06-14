@@ -1,6 +1,21 @@
 {
-  "invoice_id": "ext-inv-rider-8842",
-  "status": "failed",
-  "event_id": "evt_20260311_failed_001",
-  "detail": "Payment declined by provider"
+  "id": "evt_payment_failed_001",
+  "type": "payment.failed",
+  "api_version": "2026-06-12",
+  "created": 1718195530,
+  "livemode": false,
+  "data": {
+    "object": {
+      "payment_reference": "fail_ref_001",
+      "status": "error",
+      "variant": "mpesa",
+      "amount": "15000.00",
+      "currency": "TZS",
+      "invoice_uuid": "",
+      "intent": "wallet-deposit",
+      "partner_id": 42,
+      "failure_message": "Insufficient M-Pesa balance",
+      "failure_code": "insufficient_funds"
+    }
+  }
 }

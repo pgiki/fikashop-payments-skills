@@ -1,0 +1,14 @@
+{
+  "feature_code": "partner_site_ai_credits",
+  "feature_name": "Partner site AI credits",
+  "feature_type": "quota",
+  "allowed": true,
+  "used": 13,
+  "remaining": 87,
+  "quota": 100,
+  "subscription_id": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+  "status": "billed",
+  "billed_quantity": 1,
+  "amount_charged": "0.0000",
+  "currency": "TZS"
+}

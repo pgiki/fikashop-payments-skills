@@ -1,5 +1,6 @@
 /**
  * Checkout B (shared invoice pay) — end-to-end client flow.
+ * **User OIDC token only** — not the server admin API key.
  * Requires Bearer token, configured partner, and a public invoice UUID.
  */
 import {

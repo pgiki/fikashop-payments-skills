@@ -1,0 +1,55 @@
+{
+  "id": "c3d4e5f6-a7b8-9012-cdef-123456789012",
+  "active": false,
+  "cancelled": false,
+  "billing_retry_exhausted": false,
+  "payment_failure_notify_count": 1,
+  "date_billing_start": "2026-06-14T10:00:00Z",
+  "date_billing_end": null,
+  "date_billing_last": null,
+  "date_billing_next": "2026-07-14T10:00:00Z",
+  "meta": {
+    "partner_id": 42,
+    "partner_code": "acme-mobility",
+    "source": "api_subscribe",
+    "plan_cost_slug": "pro-monthly"
+  },
+  "subscription": {
+    "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "slug": "pro-monthly",
+    "cost": "15000.0000",
+    "currency": "TZS",
+    "recurrence_period": 1,
+    "recurrence_unit": "month",
+    "plan": {
+      "id": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
+      "slug": "pro",
+      "plan_name": "Pro",
+      "plan_description": "Full access",
+      "grace_period": 3
+    }
+  },
+  "unpaid_invoices": [
+    {
+      "uuid": "d4e5f6a7-b8c9-0123-def0-234567890123",
+      "number": "INV-2026-0042",
+      "currency": "TZS",
+      "status": "pending",
+      "date": "2026-06-14",
+      "due_date": "2026-06-21",
+      "payment_terms": "Pay here: https://pay.fikashop.app/invoices/d4e5f6a7-b8c9-0123-def0-234567890123",
+      "total": "15000.0000",
+      "balance": "15000.0000"
+    }
+  ],
+  "feature_usage": [],
+  "recovery": {
+    "recommended_action": "pay_dunning_invoice",
+    "dunning_invoice_uuid": "d4e5f6a7-b8c9-0123-def0-234567890123"
+  },
+  "links": {
+    "invoices": "/invoices/api/invoices/",
+    "wallet_transactions": "/subscriptions/api/subscriptions/transactions/",
+    "wallet_balance": "/subscriptions/api/subscriptions/balance/"
+  }
+}

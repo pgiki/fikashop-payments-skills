@@ -1,0 +1,5 @@
+{
+  "feature_code": "sms_outbound",
+  "allowed": false,
+  "detail": "No active subscription."
+}

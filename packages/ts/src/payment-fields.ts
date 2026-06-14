@@ -104,6 +104,17 @@ export function validateFieldValues(
     const str = v == null ? '' : String(v).trim();
     if (f.is_required && !str) {
       errors.push({ code: f.code, message: `${label} is required` });
+      continue;
+    }
+    if (str && f.schema && typeof f.schema.pattern === 'string') {
+      try {
+        const re = new RegExp(f.schema.pattern);
+        if (!re.test(str)) {
+          errors.push({ code: f.code, message: `${label} format is invalid` });
+        }
+      } catch {
+        // ignore invalid schema.pattern in API payload
+      }
     }
   }
   return errors;

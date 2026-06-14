@@ -15,7 +15,20 @@ Fixtures: [fixtures/](fixtures/) — see [fixtures/README.md](fixtures/README.md
 
 ---
 
-## 1. Auth and partner context (client)
+## 1. Auth and partner context
+
+### Server vs client tokens
+
+| Context | Token | Use |
+|---------|-------|-----|
+| **Client** (React, RN, web) | End-user OIDC `access_token` from `https://oidc.fikachu.com` | Subscribe, wallet, invoice pay, feature bill |
+| **Server** (backend jobs) | `FIKASHOP_ADMIN_ACCESS_TOKEN` from fikashop dashboard **Settings → API keys** | Register webhook endpoints, admin partner APIs |
+
+Subscription routes remain **user-scoped** (`IsAuthenticated`). The admin token is the business admin identity — not arbitrary customer impersonation.
+
+**Security:** never embed `FIKASHOP_ADMIN_ACCESS_TOKEN` in `EXPO_PUBLIC_*` or mobile storage. Example: [docs/examples/server-webhook-setup.ts](../docs/examples/server-webhook-setup.ts).
+
+Client checkout examples ([subscribe-and-topup.ts](../docs/examples/subscribe-and-topup.ts), [checkout-invoice.ts](../docs/examples/checkout-invoice.ts)) are **user-token only**.
 
 ### OIDC (shared with fikashop)
 
@@ -74,7 +87,7 @@ Methods are **server-driven** — never hardcode lists.
 
 | Use case | GET endpoint | Notes |
 |----------|--------------|-------|
-| Top-up | `/invoices/api/subscriptions/balance/` | Use `payment_methods`; exclude `code === 'wallet'` |
+| Top-up | `/subscriptions/api/subscriptions/balance/` | Use `payment_methods`; exclude `code === 'wallet'` |
 | Pay invoice | `/invoices/api/public/{uuid}/` | Respect `public_pay_blocked` |
 
 Each method: `code`, `name`, `method_type`, optional `description`, optional `image_url`, optional `input_fields[]`.
@@ -103,56 +116,17 @@ TS helpers: `getInputFieldsForMethod`, `defaultFieldValues`, `validateFieldValue
 
 ## 3. Subscriptions (partner-scoped wallet billing)
 
-Subscriptions bill from the user's **partner-scoped wallet**. Top up the wallet (Checkout A) when subscribe fails for insufficient funds.
+**Full detail:** [SUBSCRIPTIONS.md](SUBSCRIPTIONS.md) — every endpoint, feature API, recovery playbook, error matrix, and fixture links. Use that doc for subscription integration; this section is a summary only.
 
-Base path: `/invoices/api/subscriptions/` (duplicate: `/subscriptions/api/subscriptions/`).
+Subscriptions bill from the user's **partner-scoped wallet**. Base path: **`/subscriptions/api/subscriptions/`**
 
-### Typical UI flow
+- **Catalog:** `GET …/plans/` → subscribe with `costs[].slug` (not plan slug)
+- **Subscribe:** `POST …/` → `active: true` if funded; else `active: false` + `unpaid_invoices[]`
+- **Features:** `GET …/features/{code}/access/` then `POST …/features/{code}/bill/` after each gated action
+- **Manage:** `change-plan/`, `cancel/`, `transactions/`
+- **Recovery:** wallet top-up (Path A) or pay dunning invoice uuid via Checkout B (Path B) — see [SUBSCRIPTIONS.md § Recovery](SUBSCRIPTIONS.md#recovery-playbook-underfunded-subscribe--failed-renewal)
 
-1. `GET /invoices/api/subscriptions/` — active subscriptions + wallet balance summary
-2. `GET /invoices/api/subscriptions/plans/` — plan catalog with nested `costs[]` (each cost has a `slug`)
-3. User picks a billing option → `POST /invoices/api/subscriptions/` with `{ "plan_cost_slug": "pro-monthly" }`
-4. On success (201), subscription is activated if wallet covers the plan cost; otherwise it stays inactive until funded
-5. `GET /invoices/api/subscriptions/transactions/` — wallet ledger history (paginated `results[]`)
-
-Fixtures: [subscriptions-list.json](fixtures/subscriptions-list.json), [subscription-plans.json](fixtures/subscription-plans.json), [subscribe-response.json](fixtures/subscribe-response.json)
-
-### Subscribe
-
-```http
-POST /invoices/api/subscriptions/
-Authorization: Bearer {access_token}
-X-Partner-Id: {partner_code}
-Content-Type: application/json
-
-{ "plan_cost_slug": "pro-monthly" }
-```
-
-Slug-first: if the `PlanCost` exists, only `plan_cost_slug` is required. Creating new plans/costs via API is for admin/bootstrap flows — integrators normally use slugs from `GET …/plans/`.
-
-### Change plan
-
-```http
-POST /invoices/api/subscriptions/change-plan/
-{ "subscription_id": "uuid", "target_plan_cost_slug": "pro-yearly", "effective_mode": "immediate" }
-```
-
-`effective_mode`: `immediate` (default) or `next_cycle`. Alternate costs for an existing subscription: `GET …/plan-options/?for_subscription={uuid}`.
-
-### Cancel
-
-```http
-POST /invoices/api/subscriptions/cancel/
-{ "subscription_id": "uuid" }
-```
-
-### Wallet + payments link
-
-| Step | Action |
-|------|--------|
-| Subscribe fails (insufficient wallet) | Run Checkout A (`wallet-deposit`) |
-| After top-up confirmed | Retry `POST …/subscriptions/` or wait for billing retry |
-| Async top-up confirmation | Handle `wallet.deposit_succeeded` webhook |
+Key fixtures: [subscriptions-list.json](fixtures/subscriptions-list.json), [subscription-plans.json](fixtures/subscription-plans.json), [subscribe-response.json](fixtures/subscribe-response.json), [subscribe-response-inactive-dunning.json](fixtures/subscribe-response-inactive-dunning.json), [feature-access-allowed.json](fixtures/feature-access-allowed.json), [feature-bill-response.json](fixtures/feature-bill-response.json)
 
 ---
 
@@ -160,9 +134,9 @@ POST /invoices/api/subscriptions/cancel/
 
 ### A — Wallet top-up (one POST)
 
-1. `GET /invoices/api/subscriptions/balance/` → balance + methods  
+1. `GET /subscriptions/api/subscriptions/balance/` → balance + methods  
 2. User picks method, fills `input_fields`  
-3. `POST /invoices/api/subscriptions/wallet-deposit/`
+3. `POST /subscriptions/api/subscriptions/wallet-deposit/`
 
 ```json
 {
@@ -226,15 +200,20 @@ Canonical status lists: [status-map.json](status-map.json)
 | Method | Path | Purpose |
 |--------|------|---------|
 | GET | `/shop/api/admin/partners/` | Businesses linked to user → `X-Partner-Id` |
-| GET | `/invoices/api/subscriptions/` | List subscriptions + wallet balance |
-| GET | `/invoices/api/subscriptions/plans/` | Plan catalog (nested costs) |
-| GET | `/invoices/api/subscriptions/plan-options/` | Alternate costs (`?for_subscription=`) |
-| POST | `/invoices/api/subscriptions/` | Subscribe (`plan_cost_slug`) |
-| POST | `/invoices/api/subscriptions/change-plan/` | Change billing option |
-| POST | `/invoices/api/subscriptions/cancel/` | Cancel subscription |
-| GET | `/invoices/api/subscriptions/transactions/` | Wallet transaction history |
-| GET | `/invoices/api/subscriptions/balance/` | Balance + deposit methods |
-| POST | `/invoices/api/subscriptions/wallet-deposit/` | Top-up |
+| GET | `/subscriptions/api/subscriptions/` | List subscriptions + wallet balance — [subscriptions-list.json](fixtures/subscriptions-list.json) |
+| GET | `/subscriptions/api/subscriptions/plans/` | Plan catalog — [subscription-plans.json](fixtures/subscription-plans.json) |
+| GET | `/subscriptions/api/subscriptions/features/{code}/access/` | Feature access — [feature-access-allowed.json](fixtures/feature-access-allowed.json) |
+| POST | `/subscriptions/api/subscriptions/features/{code}/bill/` | Bill usage — [feature-bill-response.json](fixtures/feature-bill-response.json) |
+| GET | `/subscriptions/api/subscriptions/plan-options/` | Alternate costs — [plan-options-all.json](fixtures/plan-options-all.json) |
+| POST | `/subscriptions/api/subscriptions/` | Subscribe — [subscribe-response.json](fixtures/subscribe-response.json) |
+| POST | `/subscriptions/api/subscriptions/change-plan/` | Change plan — [change-plan-response.json](fixtures/change-plan-response.json) |
+| POST | `/subscriptions/api/subscriptions/cancel/` | Cancel — [cancel-response.json](fixtures/cancel-response.json) |
+| GET | `/subscriptions/api/subscriptions/transactions/` | History — [subscription-transactions-page1.json](fixtures/subscription-transactions-page1.json) |
+| GET | `/subscriptions/api/subscriptions/balance/` | Balance + methods — [balance-with-methods.json](fixtures/balance-with-methods.json) |
+| POST | `/subscriptions/api/subscriptions/wallet-deposit/` | Top-up — [wallet-deposit-request.json](fixtures/wallet-deposit-request.json) |
+
+**Idempotency:** send header `Idempotency-Key` (or `X-Idempotency-Key`) on `POST …/subscriptions/`, `POST …/wallet-deposit/`, and `POST …/features/{code}/bill/`. Same key replays the cached response for 24h. SDK: `subscribeToPlan`, `walletDeposit`, and `billFeatureUsage` accept `idempotencyKey`.
+
 | GET | `/invoices/api/public/{uuid}/` | Invoice + pay methods |
 | POST | `/invoices/api/public/{uuid}/pay/` | Start pay → `payment_reference` |
 | POST | `/payments/process/{ref}/` | Submit details (`action: capture`) — **root path, not under `/shop/api/`** |
@@ -246,9 +225,8 @@ Canonical status lists: [status-map.json](status-map.json)
 
 | Method | Path | Notes |
 |--------|------|-------|
-| GET | `/subscriptions/api/subscriptions/balance/` | Same as invoices prefix (duplicate mount) |
 | GET | `/invoices/api/public/{uuid}/payment-methods/` | Methods only (mobile apps) |
-| GET | `/invoices/api/subscriptions/payment-methods/` | Deposit methods with `?exclude_codes=` |
+| GET | `/subscriptions/api/subscriptions/payment-methods/` | Deposit methods with `?exclude_codes=` |
 | GET | `/shop/api/checkout/payment-methods/available/` | Storefront checkout methods (see §7) |
 
 ---
@@ -297,8 +275,14 @@ Fixture: [fixtures/webhook-event-envelope.json](fixtures/webhook-event-envelope.
 | `invoice.payment_succeeded` | Invoice paid or partially paid |
 | `invoice.settlement_posted` / `invoice.settlement_failed` | Ledger settlement |
 | `wallet.deposit_succeeded` | Wallet top-up credited |
+| `subscription.created` | User subscribed via API |
+| `subscription.updated` | Activation, renewal, dunning recovery, billing state |
+| `subscription.cancelled` | Subscription cancelled |
+| `subscription.past_due` | Dunning invoice or failed renewal |
 
-Correlate invoice pay via `data.object.external_invoice_reference` or `invoice_uuid`. Wallet top-ups use `intent: wallet-deposit`.
+Correlate invoice pay via `data.object.external_invoice_reference` or `invoice_uuid`. Wallet top-ups use `intent: wallet-deposit`. Subscriptions expose `client_reference` and `recovery` hints on API responses.
+
+**Handler libraries:** TS — `processUnifiedWebhook`, `createWebhookRouter`; Python — `process_unified_webhook`, `create_webhook_router`. Examples: [express_webhook.ts](../docs/examples/express_webhook.ts), [fastapi_webhook.py](../docs/examples/fastapi_webhook.py).
 
 Full reference: [fikashop-api docs/README-webhooks.md](../../fikashop-api/docs/README-webhooks.md)
 
@@ -351,7 +335,7 @@ Full map: [status-map.json](status-map.json)
 5. Unknown status → `200` ack only  
 6. Else update local record by `invoice_id` → `200 { "received": true }`
 
-**Libraries:** `packages/python` (`process_payment_webhook`, `verify_unified_fikashop_signature`), `packages/ts` (`verifyFikashopSignature`, `verifyUnifiedFikashopSignature`).
+**Libraries:** `packages/python` (`process_unified_webhook`, `create_webhook_router`, `verify_unified_fikashop_signature`), `packages/ts` (`processUnifiedWebhook`, `createWebhookRouter`, `verifyUnifiedFikashopSignature`, poll helpers).
 
 ### Local test
 

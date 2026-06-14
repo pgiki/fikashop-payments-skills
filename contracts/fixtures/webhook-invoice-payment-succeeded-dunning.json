@@ -1,0 +1,22 @@
+{
+  "id": "evt_inv_pay_dunning_001",
+  "type": "invoice.payment_succeeded",
+  "api_version": "2026-06-12",
+  "created": 1718195700,
+  "livemode": false,
+  "data": {
+    "object": {
+      "invoice_uuid": "d4e5f6a7-b8c9-0123-def0-234567890123",
+      "external_invoice_reference": "",
+      "number": "INV-2026-0042",
+      "status": "paid",
+      "amount_paid": "15000.00",
+      "balance": "0.00",
+      "currency": "TZS",
+      "payment_reference": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+      "payment_amount": "15000.00",
+      "invoice_payment_uuid": "e5f6a7b8-c9d0-1234-ef01-345678901234",
+      "amount": "15000.00"
+    }
+  }
+}

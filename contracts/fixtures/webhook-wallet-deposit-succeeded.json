@@ -1,0 +1,20 @@
+{
+  "id": "evt_wallet_dep_001",
+  "type": "wallet.deposit_succeeded",
+  "api_version": "2026-06-12",
+  "created": 1718195525,
+  "livemode": true,
+  "data": {
+    "object": {
+      "payment_reference": "9f86d081-9b2e-4c3a-8f1d-2a3b4c5d6e7f",
+      "status": "confirmed",
+      "amount": "10000.00",
+      "currency": "TZS",
+      "meta": {
+        "intent": "wallet-deposit",
+        "wallet_id": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
+        "partner_id": 42
+      }
+    }
+  }
+}

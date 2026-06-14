@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatWalletFailure, trimMessage } from '../../packages/ts/src/errors';
+import { formatGatewayFailure, formatSubscriptionFailure, formatWalletFailure, trimMessage } from '../../packages/ts/src/errors';
 
 describe('errors', () => {
   it('trimMessage truncates long strings', () => {
@@ -18,5 +18,23 @@ describe('errors', () => {
       data: { detail: 'Invalid amount' },
     } as never);
     expect(msg).toContain('Invalid amount');
+  });
+
+  it('formatGatewayFailure routes 402 to subscription formatter', () => {
+    const msg = formatGatewayFailure({
+      problem: 'CLIENT_ERROR',
+      status: 402,
+      data: { detail: 'Insufficient wallet balance' },
+    } as never);
+    expect(msg).toContain('Insufficient wallet');
+  });
+
+  it('formatSubscriptionFailure warns about admin token on 403', () => {
+    const msg = formatSubscriptionFailure({
+      problem: 'CLIENT_ERROR',
+      status: 403,
+      data: { detail: 'Forbidden' },
+    } as never);
+    expect(msg.toLowerCase()).toContain('token');
   });
 });

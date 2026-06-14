@@ -16,8 +16,21 @@
 ## Contracts and docs
 
 - Update [contracts/REFERENCE.md](contracts/REFERENCE.md) when API behavior changes
-- Add or update fixtures in [contracts/fixtures/](contracts/fixtures/)
+- Update [contracts/SUBSCRIPTIONS.md](contracts/SUBSCRIPTIONS.md) when subscription endpoints, recovery, or idempotency change
+- Update [fikashop-api/docs/README-subscriptions-api-integration.md](../../fikashop-api/docs/README-subscriptions-api-integration.md) and [fikashop-api/docs/README-webhooks.md](../../fikashop-api/docs/README-webhooks.md) in the same PR when webhook or subscription contracts change
+- Add or update fixtures in [contracts/fixtures/](contracts/fixtures/) — keep fixture tests green
+- Regenerate [fikashop-api/openapi.yaml](../../fikashop-api/openapi.yaml) when DRF schema changes
 - Update [SKILL.md](SKILL.md) for agent-facing quick reference
+
+## Cursor skill sync
+
+After changing `SKILL.md` or contracts, ensure symlinks point at this repo (not a stale clone):
+
+```bash
+ln -sf "$(pwd)" ~/.cursor/skills/fikashop-payments-skills
+# Monorepo: from fikashop root
+ln -sf "$(pwd)/fikashop-payments-skills" .cursor/skills/fikashop-payments-skills
+```
 
 ## CI
 

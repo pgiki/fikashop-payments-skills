@@ -1,0 +1,26 @@
+{
+  "count": 42,
+  "page": 1,
+  "next": "https://api.fikashop.app/subscriptions/api/subscriptions/transactions/?page=2&size=20",
+  "previous": null,
+  "results": [
+    {
+      "id": "8f14e45f-ceea-467a-9a5f-8c5a5c5c5c5c",
+      "amount": "15000.0000",
+      "transaction_type": "subscription",
+      "status": "success",
+      "balance_after": "30250.0000",
+      "description": "Subscription renewal — Pro monthly",
+      "created_at": "2026-06-14T10:00:00Z"
+    },
+    {
+      "id": "7e13d34e-bdda-3569-8a4e-7b4b4b4b4b4b",
+      "amount": "10000.0000",
+      "transaction_type": "deposit",
+      "status": "success",
+      "balance_after": "45250.0000",
+      "description": "Wallet top up",
+      "created_at": "2026-06-13T15:22:00Z"
+    }
+  ]
+}

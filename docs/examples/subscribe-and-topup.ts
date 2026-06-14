@@ -1,6 +1,8 @@
 /**
  * Subscriptions + wallet top-up — typical partner app flow.
+ * **User OIDC token only** — never FIKASHOP_ADMIN_ACCESS_TOKEN in client code.
  * Subscribe charges the partner-scoped wallet; top up when balance is insufficient.
+ * Handles inactive subscribe with unpaid_invoices[] (dunning).
  */
 import {
   createFikashopClient,
@@ -31,6 +33,18 @@ async function subscribeWithTopUp(
   const subResp = await subscribeToPlan(client, planCostSlug);
   if (subResp.ok && subResp.data?.active) {
     return { step: 'subscribed' as const, subscription: subResp.data };
+  }
+
+  if (subResp.ok && subResp.data && !subResp.data.active) {
+    const dunningUuid = subResp.data.unpaid_invoices?.[0]?.uuid;
+    if (dunningUuid) {
+      return {
+        step: 'inactive_dunning' as const,
+        subscription: subResp.data,
+        dunningInvoiceUuid: dunningUuid,
+        hint: 'Top up wallet (Path A) or pay dunning invoice via public invoice API (Path B)',
+      };
+    }
   }
 
   const { methods } = await getDepositPaymentMethods(client);
