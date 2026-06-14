@@ -5,6 +5,7 @@
     "plan_name": "Pro",
     "plan_description": "Full access",
     "grace_period": 3,
+    "tags": ["featured", "pro"],
     "costs": [
       {
         "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",

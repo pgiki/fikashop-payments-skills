@@ -12,6 +12,7 @@ function loadJson(name: string): unknown {
 const SUBSCRIPTION_FIXTURE_KEYS: Record<string, string[]> = {
   'subscriptions-list.json': ['balance', 'subscriptions'],
   'subscription-plans.json': [],
+  'subscription-plans-filtered-by-tag.json': [],
   'subscribe-response.json': ['id', 'active', 'subscription'],
   'subscribe-response-inactive-dunning.json': ['id', 'active', 'unpaid_invoices', 'recovery'],
   'subscribe-request-with-client-reference.json': ['plan_cost_slug', 'client_reference'],
@@ -42,6 +43,13 @@ const SUBSCRIPTION_FIXTURE_KEYS: Record<string, string[]> = {
   'webhook-payment-failed.json': ['id', 'type', 'data'],
   'webhook-payment-refunded.json': ['id', 'type', 'data'],
   'webhook-invoice-payment-succeeded-dunning.json': ['id', 'type', 'data'],
+  'admin-plan-create-full-request.json': ['slug', 'costs', 'features'],
+  'admin-plan-create-full-response.json': ['id', 'slug', 'costs', 'features'],
+  'admin-plan-create-request.json': ['slug'],
+  'admin-plan-patch-request.json': ['costs', 'features'],
+  'admin-plan-cost-create-request.json': ['slug'],
+  'admin-plan-feature-create-request.json': ['code'],
+  'admin-plan-delete-blocked-409.json': ['detail'],
 };
 
 describe('subscription fixtures', () => {
@@ -59,10 +67,21 @@ describe('subscription fixtures', () => {
       }
       if (
         name === 'subscription-plans.json' ||
+        name === 'subscription-plans-filtered-by-tag.json' ||
         name === 'subscription-payment-methods.json' ||
         name.startsWith('plan-options')
       ) {
         expect(Array.isArray(data)).toBe(true);
+      }
+    }
+  });
+
+  it('plan catalog fixtures include tags arrays', () => {
+    for (const name of ['subscription-plans.json', 'subscription-plans-filtered-by-tag.json']) {
+      const plans = loadJson(name) as { tags?: string[] }[];
+      expect(plans.length).toBeGreaterThan(0);
+      for (const plan of plans) {
+        expect(Array.isArray(plan.tags)).toBe(true);
       }
     }
   });

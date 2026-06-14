@@ -72,7 +72,7 @@ Base path: **`/subscriptions/api/subscriptions/`**
 |--------|------|---------|------------|
 | GET | `/` | List subscriptions + wallet `balance` | [subscriptions-list.json](fixtures/subscriptions-list.json) |
 | POST | `/` | Subscribe (`plan_cost_slug`) | [subscribe-response.json](fixtures/subscribe-response.json), [subscribe-response-inactive-dunning.json](fixtures/subscribe-response-inactive-dunning.json) |
-| GET | `/plans/` | Plan catalog (`costs[]`, `features[]`) | [subscription-plans.json](fixtures/subscription-plans.json) |
+| GET | `/plans/` | Plan catalog (`tags[]`, `costs[]`, `features[]`); optional `?tags=` filter (AND) | [subscription-plans.json](fixtures/subscription-plans.json), [subscription-plans-filtered-by-tag.json](fixtures/subscription-plans-filtered-by-tag.json) |
 | GET | `/features/{code}/access/` | Check feature access | [feature-access-allowed.json](fixtures/feature-access-allowed.json) |
 | POST | `/features/{code}/bill/` | Bill feature usage | [feature-bill-response.json](fixtures/feature-bill-response.json) |
 | GET | `/plan-options/` | Alternate costs | [plan-options-all.json](fixtures/plan-options-all.json) |
@@ -151,7 +151,22 @@ GET /subscriptions/api/subscriptions/plans/
 Authorization: Bearer {access_token}
 ```
 
-**Response `200`:** [subscription-plans.json](fixtures/subscription-plans.json) — includes `costs[]` and `features[]` with quotas, overage rates, and pricing tiers.
+Filter by tag (AND — plans with **every** listed tag):
+
+```http
+GET /subscriptions/api/subscriptions/plans/?tags=enterprise
+GET /subscriptions/api/subscriptions/plans/?tags=enterprise,featured
+```
+
+Each plan includes `tags: string[]` (tag names), optional `partner_id` / `partner_code`, and billing options in `costs[]`. Tags are assigned via the **admin catalog API** ([ADMIN-SUBSCRIPTIONS.md](ADMIN-SUBSCRIPTIONS.md)) or Django admin; integrators read and filter only.
+
+With **`X-Partner-Id`**, the catalog returns partner-specific plans plus platform templates (`partner_id: null`). Subscribe and change-plan resolve `plan_cost_slug` within that partner scope.
+
+**Response `200`:** [subscription-plans.json](fixtures/subscription-plans.json) — includes `tags[]`, `costs[]`, and `features[]` with quotas, overage rates, and pricing tiers.
+
+Filtered example: [subscription-plans-filtered-by-tag.json](fixtures/subscription-plans-filtered-by-tag.json) for `?tags=enterprise`.
+
+Example: [plans-by-tag.ts](../docs/examples/plans-by-tag.ts)
 
 ---
 

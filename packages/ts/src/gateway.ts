@@ -93,8 +93,15 @@ export async function listSubscriptions(client: FikashopClient) {
   return client.get<SubscriptionListResponse>(PATHS.subscriptions);
 }
 
-export async function getSubscriptionPlans(client: FikashopClient) {
-  return client.get<SubscriptionPlanCatalogItem[]>(PATHS.plans);
+export async function getSubscriptionPlans(
+  client: FikashopClient,
+  options?: { tags?: string[] },
+) {
+  const tags = options?.tags?.map((t) => t.trim()).filter(Boolean).join(',');
+  return client.get<SubscriptionPlanCatalogItem[]>(
+    PATHS.plans,
+    tags ? { tags } : undefined,
+  );
 }
 
 export async function getPlanOptions(client: FikashopClient, subscriptionId: string) {

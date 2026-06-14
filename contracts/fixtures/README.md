@@ -2,7 +2,7 @@
 
 Example payloads aligned with [fikashop-api](https://github.com/fikachu/fikashop) serializers and provider responses. Use these when building UI or validating SDK helpers — field names and shapes match production API contracts.
 
-**Related:** [REFERENCE.md](../REFERENCE.md) · [SUBSCRIPTIONS.md](../SUBSCRIPTIONS.md) · [status-map.json](../status-map.json)
+**Related:** [REFERENCE.md](../REFERENCE.md) · [SUBSCRIPTIONS.md](../SUBSCRIPTIONS.md) · [ADMIN-SUBSCRIPTIONS.md](../ADMIN-SUBSCRIPTIONS.md) · [status-map.json](../status-map.json)
 
 ## Client setup
 
@@ -22,10 +22,25 @@ Example payloads aligned with [fikashop-api](https://github.com/fikachu/fikashop
 | File | Endpoint | Notes |
 |------|----------|-------|
 | [subscriptions-list.json](subscriptions-list.json) | `GET /subscriptions/api/subscriptions/` | `balance` + `subscriptions[]` with `meta`, `feature_usage[]`, billing dates, `links`. |
-| [subscription-plans.json](subscription-plans.json) | `GET /subscriptions/api/subscriptions/plans/` | Plan catalog; `costs[]` with `slug`; `features[]` with quotas and tiers. |
+| [subscription-plans.json](subscription-plans.json) | `GET /subscriptions/api/subscriptions/plans/` | Plan catalog; `tags[]`; `costs[]` with `slug`; `features[]` with quotas and tiers. |
+| [subscription-plans-filtered-by-tag.json](subscription-plans-filtered-by-tag.json) | `GET /subscriptions/api/subscriptions/plans/?tags=enterprise` | Subset when filtering by tag (AND). |
 | [subscribe-response.json](subscribe-response.json) | `POST /subscriptions/api/subscriptions/` (201) | Activated subscription after successful wallet charge. |
 | [subscribe-response-inactive-dunning.json](subscribe-response-inactive-dunning.json) | `POST /subscriptions/api/subscriptions/` (201) | Underfunded subscribe: `active: false`, `unpaid_invoices[]`. |
 | [subscribe-error-unknown-slug.json](subscribe-error-unknown-slug.json) | `POST /subscriptions/api/subscriptions/` (400) | Unknown `plan_cost_slug` without bootstrap `plan` block. |
+
+## Subscriptions — admin catalog (server)
+
+Staff token + `X-Partner-Id`. See [ADMIN-SUBSCRIPTIONS.md](../ADMIN-SUBSCRIPTIONS.md).
+
+| File | Endpoint | Notes |
+|------|----------|-------|
+| [admin-plan-create-full-request.json](admin-plan-create-full-request.json) | `POST /shop/api/admin/subscription-plans/` | Nested `costs[]`, `features[]`, `pricing_tiers[]`. |
+| [admin-plan-create-full-response.json](admin-plan-create-full-response.json) | `POST …/subscription-plans/` (201) | Full plan with `partner_id`, nested rows. |
+| [admin-plan-create-request.json](admin-plan-create-request.json) | `POST …/subscription-plans/` | Minimal create with tags only. |
+| [admin-plan-patch-request.json](admin-plan-patch-request.json) | `PATCH …/subscription-plans/{id}/` | Upsert cost price + feature quota. |
+| [admin-plan-cost-create-request.json](admin-plan-cost-create-request.json) | `POST …/subscription-plans/{id}/costs/` | Incremental cost add. |
+| [admin-plan-feature-create-request.json](admin-plan-feature-create-request.json) | `POST …/subscription-plans/{id}/features/` | Incremental feature add. |
+| [admin-plan-delete-blocked-409.json](admin-plan-delete-blocked-409.json) | `DELETE …/plan-costs/{id}/` (409) | Cost referenced by subscriptions. |
 
 ## Subscriptions — change plan, cancel, options
 

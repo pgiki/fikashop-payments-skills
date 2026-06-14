@@ -101,8 +101,55 @@ export type SubscriptionPlanCatalogItem = {
   plan_name: string;
   plan_description?: string;
   grace_period?: number;
+  partner_id?: number | null;
+  partner_code?: string | null;
+  tags?: string[];
   costs?: PlanCostSummary[];
   features?: FeatureUsageSummary[];
+};
+
+export type AdminPricingTierInput = {
+  start_quantity: number;
+  end_quantity?: number | null;
+  unit_price: string;
+  flat_fee?: string;
+};
+
+export type AdminPlanCostWrite = {
+  slug: string;
+  recurrence_period?: number;
+  recurrence_unit?: string;
+  cost?: string | null;
+  currency?: string;
+};
+
+export type AdminPlanFeatureWrite = {
+  code: string;
+  name?: string;
+  feature_type?: string;
+  pricing_model?: string;
+  unit?: string;
+  enabled?: boolean;
+  quota?: number | null;
+  overage_rate?: string | null;
+  rate_limit?: number | null;
+  pricing_tiers?: AdminPricingTierInput[];
+};
+
+export type AdminSubscriptionPlanWrite = {
+  slug: string;
+  plan_name?: string;
+  plan_description?: string;
+  grace_period?: number;
+  is_feature_based?: boolean;
+  tags?: string[];
+  partner?: number | null;
+  costs?: AdminPlanCostWrite[];
+  features?: AdminPlanFeatureWrite[];
+};
+
+export type AdminSubscriptionPlan = SubscriptionPlanCatalogItem & {
+  is_feature_based?: boolean;
 };
 
 export type FeatureUsageSummary = {

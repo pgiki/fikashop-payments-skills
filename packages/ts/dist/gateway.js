@@ -55,8 +55,9 @@ export async function walletDeposit(client, input) {
 export async function listSubscriptions(client) {
     return client.get(PATHS.subscriptions);
 }
-export async function getSubscriptionPlans(client) {
-    return client.get(PATHS.plans);
+export async function getSubscriptionPlans(client, options) {
+    const tags = options?.tags?.map((t) => t.trim()).filter(Boolean).join(',');
+    return client.get(PATHS.plans, tags ? { tags } : undefined);
 }
 export async function getPlanOptions(client, subscriptionId) {
     return client.get(PATHS.planOptions, { for_subscription: subscriptionId });

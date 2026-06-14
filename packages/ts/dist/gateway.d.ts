@@ -39,7 +39,9 @@ export declare function walletDeposit(client: FikashopClient, input: {
     idempotencyKey?: string;
 }): Promise<ApiResponse<WalletDepositResponse, WalletDepositResponse>>;
 export declare function listSubscriptions(client: FikashopClient): Promise<ApiResponse<SubscriptionListResponse, SubscriptionListResponse>>;
-export declare function getSubscriptionPlans(client: FikashopClient): Promise<ApiResponse<SubscriptionPlanCatalogItem[], SubscriptionPlanCatalogItem[]>>;
+export declare function getSubscriptionPlans(client: FikashopClient, options?: {
+    tags?: string[];
+}): Promise<ApiResponse<SubscriptionPlanCatalogItem[], SubscriptionPlanCatalogItem[]>>;
 export declare function getPlanOptions(client: FikashopClient, subscriptionId: string): Promise<ApiResponse<PlanCostSummary[], PlanCostSummary[]>>;
 export declare function subscribeToPlan(client: FikashopClient, planCostSlug: string, opts?: {
     clientReference?: string;

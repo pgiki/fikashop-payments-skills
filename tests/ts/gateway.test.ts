@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { FikashopGatewayPaths, parsePartnerList } from '../../packages/ts/src/gateway';
+import { FikashopGatewayPaths, getSubscriptionPlans, parsePartnerList } from '../../packages/ts/src/gateway';
+import type { FikashopClient } from '../../packages/ts/src/client';
 
 describe('gateway', () => {
   it('parsePartnerList reads paginated results', () => {
@@ -35,5 +36,21 @@ describe('gateway subscription paths', () => {
     expect(FikashopGatewayPaths.featureBill('partner_site_ai_credits')).toBe(
       '/subscriptions/api/subscriptions/features/partner_site_ai_credits/bill/',
     );
+  });
+
+  it('getSubscriptionPlans passes comma-separated tag query', async () => {
+    let capturedParams: unknown;
+    const client = {
+      get: async (_url: string, params?: unknown) => {
+        capturedParams = params;
+        return { ok: true, data: [] };
+      },
+    } as unknown as FikashopClient;
+
+    await getSubscriptionPlans(client, { tags: ['enterprise', 'featured'] });
+    expect(capturedParams).toEqual({ tags: 'enterprise,featured' });
+
+    await getSubscriptionPlans(client);
+    expect(capturedParams).toBeUndefined();
   });
 });

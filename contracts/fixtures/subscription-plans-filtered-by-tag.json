@@ -1,0 +1,21 @@
+[
+  {
+    "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "slug": "enterprise",
+    "plan_name": "Enterprise",
+    "plan_description": "For large teams",
+    "grace_period": 7,
+    "tags": ["enterprise"],
+    "costs": [
+      {
+        "id": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
+        "slug": "enterprise-monthly",
+        "recurrence_period": 1,
+        "recurrence_unit": "month",
+        "cost": "50000.0000",
+        "currency": "TZS"
+      }
+    ],
+    "features": []
+  }
+]
