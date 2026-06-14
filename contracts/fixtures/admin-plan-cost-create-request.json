@@ -1,0 +1,7 @@
+{
+  "slug": "enterprise-monthly",
+  "recurrence_period": 1,
+  "recurrence_unit": "month",
+  "cost": "50000.0000",
+  "currency": "TZS"
+}

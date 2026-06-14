@@ -15,6 +15,7 @@ description: Integrate fikashop-api for payments (wallet top-up, invoice pay), s
 | Pay a shared invoice | **Checkout B** | `GET …/public/{uuid}/` → `POST …/pay/` → `POST /payments/process/{ref}/` |
 | Subscribe / manage plans | **Subscriptions C** | `GET …/plans/`, `POST …/`, features, `change-plan/`, `cancel/` |
 | Confirm async payment | **Webhooks** | Register `POST /shop/api/admin/webhooks/endpoints/`; verify `Fikashop-Signature` |
+| Manage plan catalog (server) | **Admin catalog** | `POST /shop/api/admin/subscription-plans/` — [ADMIN-SUBSCRIPTIONS.md](contracts/ADMIN-SUBSCRIPTIONS.md) |
 
 All client flows need **`Authorization: Bearer`** (end-user OIDC from `https://oidc.fikachu.com`) and **`X-Partner-Id`** before calling wallet, invoice, or subscription APIs.
 
@@ -22,7 +23,7 @@ All client flows need **`Authorization: Bearer`** (end-user OIDC from `https://o
 
 | Context | Token | Example |
 |---------|-------|---------|
-| **Server** | `FIKASHOP_ADMIN_ACCESS_TOKEN` (dashboard **Settings → API keys**) | Webhook endpoint registration — [server-webhook-setup.ts](docs/examples/server-webhook-setup.ts) |
+| **Server** | `FIKASHOP_ADMIN_ACCESS_TOKEN` (dashboard **Settings → API keys**) | Webhooks — [server-webhook-setup.ts](docs/examples/server-webhook-setup.ts); catalog — [admin-subscription-catalog.ts](docs/examples/admin-subscription-catalog.ts) |
 | **Client** (React/RN) | User OIDC `access_token` only | [subscribe-and-topup.ts](docs/examples/subscribe-and-topup.ts), [checkout-invoice.ts](docs/examples/checkout-invoice.ts) |
 
 Never ship the admin token in client bundles (`EXPO_PUBLIC_*`, mobile storage). See [contracts/PRODUCTION.md](contracts/PRODUCTION.md).
@@ -83,7 +84,7 @@ Base path: `/subscriptions/api/subscriptions/`.
 ### Dashboard + catalog
 
 1. `GET …/subscriptions/` — all subscriptions + wallet `balance` (filter on `active`, `cancelled`, `unpaid_invoices`)
-2. `GET …/plans/` — read-only catalog; subscribe with `costs[].slug` (not plan slug)
+2. `GET …/plans/` — read-only catalog; optional `?tags=` filter (AND); subscribe with `costs[].slug` (not plan slug)
 3. `GET …/plan-options/?for_subscription={uuid}` — same-plan billing options for change-plan UI
 
 Fixtures: [subscriptions-list.json](contracts/fixtures/subscriptions-list.json), [subscription-plans.json](contracts/fixtures/subscription-plans.json)
@@ -146,7 +147,8 @@ Examples: [express_webhook.ts](docs/examples/express_webhook.ts) · [webhook-hos
 | Methods | `getDepositPaymentMethods`, `getInputFieldsForMethod`, `validateFieldValues`, `defaultFieldValues` |
 | Checkout A | `walletDeposit` (`idempotencyKey`), `buildDepositPayload` |
 | Checkout B | `getPublicInvoice`, `initiatePublicPay`, `capturePayment`, `buildCapturePayload`, `waitForInvoicePaid` |
-| Subscriptions | `listSubscriptions`, `getSubscriptionPlans`, `subscribeToPlan` (`clientReference`, `metadata`, `idempotencyKey`), `changePlan`, `cancelSubscription`, `getPlanOptions`, `getSubscriptionTransactions` |
+| Subscriptions | `listSubscriptions`, `getSubscriptionPlans` (`{ tags }`), `subscribeToPlan` (`clientReference`, `metadata`, `idempotencyKey`), `changePlan`, `cancelSubscription`, `getPlanOptions`, `getSubscriptionTransactions` |
+| Admin catalog (server) | `createAdminSubscriptionPlan`, `updateAdminSubscriptionPlan`, `deleteAdminSubscriptionPlan`, `createAdminPlanCost`, `updateAdminPlanCost`, `deleteAdminPlanCost`, `createAdminPlanFeature`, `updateAdminPlanFeature`, `deleteAdminPlanFeature` — [ADMIN-SUBSCRIPTIONS.md](contracts/ADMIN-SUBSCRIPTIONS.md) |
 | Recovery polls | `pollSubscriptionActive`, `waitForWalletCredit` |
 | Features | `checkFeatureAccess`, `billFeatureUsage` (`idempotencyKey`, `subscriptionId`) |
 | Errors | `formatWalletFailure`, `formatSubscriptionFailure`, `formatGatewayFailure`, `describeGatewayFailure` |
@@ -154,7 +156,7 @@ Examples: [express_webhook.ts](docs/examples/express_webhook.ts) · [webhook-hos
 
 Runbooks: [contracts/PRODUCTION.md](contracts/PRODUCTION.md) · Stripe mapping: [contracts/STRIPE-MIGRATION.md](contracts/STRIPE-MIGRATION.md)
 
-Examples: [checkout-invoice.ts](docs/examples/checkout-invoice.ts) · [subscribe-and-topup.ts](docs/examples/subscribe-and-topup.ts) · [feature-gating-and-bill.ts](docs/examples/feature-gating-and-bill.ts) · [dunning-recovery.ts](docs/examples/dunning-recovery.ts) · [express_webhook.ts](docs/examples/express_webhook.ts)
+Examples: [checkout-invoice.ts](docs/examples/checkout-invoice.ts) · [subscribe-and-topup.ts](docs/examples/subscribe-and-topup.ts) · [plans-by-tag.ts](docs/examples/plans-by-tag.ts) · [admin-subscription-catalog.ts](docs/examples/admin-subscription-catalog.ts) · [feature-gating-and-bill.ts](docs/examples/feature-gating-and-bill.ts) · [dunning-recovery.ts](docs/examples/dunning-recovery.ts) · [express_webhook.ts](docs/examples/express_webhook.ts)
 
 ## Pitfalls
 

@@ -13,7 +13,7 @@ See also [STRIPE-MIGRATION.md](STRIPE-MIGRATION.md) for concept mapping from Str
 | **Server** (webhook registration, admin APIs) | `FIKASHOP_ADMIN_ACCESS_TOKEN` from fikashop dashboard **Settings → API keys** | Server env / secrets manager only |
 | **Client** (React, React Native, web checkout) | End-user OIDC `access_token` from `https://oidc.fikachu.com` | Secure session storage — **never** admin token |
 
-Subscription routes are **user-scoped**. The admin token configures webhooks; it does not substitute for customer login.
+Subscription routes are **user-scoped**. The admin token configures webhooks and **subscription catalog** (`/shop/api/admin/subscription-plans/`); it does not substitute for customer login on subscribe or feature routes.
 
 ---
 
@@ -54,6 +54,8 @@ When deposit or invoice pay returns `status: redirect`:
 ## Webhook recovery (recommended)
 
 Register endpoints with the server admin token — see [docs/examples/server-webhook-setup.ts](../docs/examples/server-webhook-setup.ts).
+
+**Subscription catalog admin** (plans, costs, features) uses the same admin token with `X-Partner-Id` — see [ADMIN-SUBSCRIPTIONS.md](ADMIN-SUBSCRIPTIONS.md) and [docs/examples/admin-subscription-catalog.ts](../docs/examples/admin-subscription-catalog.ts). Keep catalog management on your backend; customers still use user tokens for `GET …/plans/` and subscribe.
 
 | Event | Action |
 |-------|--------|

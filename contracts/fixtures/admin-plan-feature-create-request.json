@@ -1,0 +1,10 @@
+{
+  "code": "api_calls",
+  "name": "API calls",
+  "feature_type": "quota",
+  "pricing_model": "flat",
+  "unit": "call",
+  "enabled": true,
+  "quota": 10000,
+  "overage_rate": "0.0100"
+}

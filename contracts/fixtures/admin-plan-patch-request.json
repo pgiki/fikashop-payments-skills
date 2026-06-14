@@ -1,0 +1,10 @@
+{
+  "plan_description": "Updated copy",
+  "tags": ["enterprise", "featured"],
+  "costs": [
+    { "slug": "enterprise-monthly", "cost": "55000.0000" }
+  ],
+  "features": [
+    { "code": "sms_outbound", "quota": 1000, "enabled": true }
+  ]
+}

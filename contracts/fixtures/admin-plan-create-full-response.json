@@ -1,0 +1,47 @@
+{
+  "id": "4d9cd4d5-9c88-4412-a92c-68d3dfd207f4",
+  "slug": "enterprise",
+  "plan_name": "Enterprise",
+  "plan_description": "For large teams",
+  "grace_period": 7,
+  "is_feature_based": true,
+  "partner_id": 42,
+  "partner_code": "ent-shop",
+  "tags": ["enterprise", "featured"],
+  "costs": [
+    {
+      "id": "68a87efd-d868-4974-9645-93ce33766b2e",
+      "plan_id": "4d9cd4d5-9c88-4412-a92c-68d3dfd207f4",
+      "plan_slug": "enterprise",
+      "slug": "enterprise-monthly",
+      "recurrence_period": 1,
+      "recurrence_unit": "month",
+      "cost": "50000.0000",
+      "currency": "TZS"
+    },
+    {
+      "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "plan_id": "4d9cd4d5-9c88-4412-a92c-68d3dfd207f4",
+      "plan_slug": "enterprise",
+      "slug": "enterprise-yearly",
+      "recurrence_period": 1,
+      "recurrence_unit": "year",
+      "cost": "500000.0000",
+      "currency": "TZS"
+    }
+  ],
+  "features": [
+    {
+      "feature_code": "sms_outbound",
+      "feature_name": "SMS outbound",
+      "feature_type": "quota",
+      "pricing_model": "flat",
+      "unit": "sms",
+      "enabled": true,
+      "quota": 500,
+      "rate_limit": null,
+      "overage_rate": "0.0500",
+      "pricing_tiers": []
+    }
+  ]
+}

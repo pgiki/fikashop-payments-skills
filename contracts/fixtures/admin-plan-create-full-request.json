@@ -1,0 +1,49 @@
+{
+  "slug": "enterprise",
+  "plan_name": "Enterprise",
+  "plan_description": "For large teams",
+  "grace_period": 7,
+  "is_feature_based": true,
+  "tags": ["enterprise", "featured"],
+  "costs": [
+    {
+      "slug": "enterprise-monthly",
+      "recurrence_period": 1,
+      "recurrence_unit": "month",
+      "cost": "50000.0000",
+      "currency": "TZS"
+    },
+    {
+      "slug": "enterprise-yearly",
+      "recurrence_period": 1,
+      "recurrence_unit": "year",
+      "cost": "500000.0000",
+      "currency": "TZS"
+    }
+  ],
+  "features": [
+    {
+      "code": "sms_outbound",
+      "name": "SMS outbound",
+      "feature_type": "quota",
+      "pricing_model": "flat",
+      "unit": "sms",
+      "enabled": true,
+      "quota": 500,
+      "overage_rate": "0.0500"
+    },
+    {
+      "code": "partner_site_ai_credits",
+      "name": "Partner site AI credits",
+      "feature_type": "quota",
+      "pricing_model": "tiered",
+      "unit": "credit",
+      "enabled": true,
+      "quota": 100,
+      "pricing_tiers": [
+        { "start_quantity": 1, "end_quantity": 50, "unit_price": "0.0000" },
+        { "start_quantity": 51, "end_quantity": null, "unit_price": "0.1000" }
+      ]
+    }
+  ]
+}

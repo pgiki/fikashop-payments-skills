@@ -120,7 +120,7 @@ TS helpers: `getInputFieldsForMethod`, `defaultFieldValues`, `validateFieldValue
 
 Subscriptions bill from the user's **partner-scoped wallet**. Base path: **`/subscriptions/api/subscriptions/`**
 
-- **Catalog:** `GET …/plans/` → subscribe with `costs[].slug` (not plan slug)
+- **Catalog:** `GET …/plans/` → subscribe with `costs[].slug` (not plan slug). Optional `?tags=` filters plans that have all listed tags (AND). Response includes `tags[]`.
 - **Subscribe:** `POST …/` → `active: true` if funded; else `active: false` + `unpaid_invoices[]`
 - **Features:** `GET …/features/{code}/access/` then `POST …/features/{code}/bill/` after each gated action
 - **Manage:** `change-plan/`, `cancel/`, `transactions/`
@@ -201,7 +201,7 @@ Canonical status lists: [status-map.json](status-map.json)
 |--------|------|---------|
 | GET | `/shop/api/admin/partners/` | Businesses linked to user → `X-Partner-Id` |
 | GET | `/subscriptions/api/subscriptions/` | List subscriptions + wallet balance — [subscriptions-list.json](fixtures/subscriptions-list.json) |
-| GET | `/subscriptions/api/subscriptions/plans/` | Plan catalog — [subscription-plans.json](fixtures/subscription-plans.json) |
+| GET | `/subscriptions/api/subscriptions/plans/` | Plan catalog — `?tags=` (AND filter), `tags[]` on each plan — [subscription-plans.json](fixtures/subscription-plans.json) |
 | GET | `/subscriptions/api/subscriptions/features/{code}/access/` | Feature access — [feature-access-allowed.json](fixtures/feature-access-allowed.json) |
 | POST | `/subscriptions/api/subscriptions/features/{code}/bill/` | Bill usage — [feature-bill-response.json](fixtures/feature-bill-response.json) |
 | GET | `/subscriptions/api/subscriptions/plan-options/` | Alternate costs — [plan-options-all.json](fixtures/plan-options-all.json) |
@@ -220,6 +220,14 @@ Canonical status lists: [status-map.json](status-map.json)
 | POST | `/shop/api/admin/webhooks/endpoints/` | Register outbound webhook endpoint (preferred) |
 | GET | `/shop/api/admin/webhooks/events/` | Delivery log |
 | POST | `/shop/api/admin/webhooks/events/{event_id}/replay/` | Replay event |
+| GET | `/shop/api/admin/subscription-plans/` | List subscription plans (staff) — [ADMIN-SUBSCRIPTIONS.md](ADMIN-SUBSCRIPTIONS.md) |
+| POST | `/shop/api/admin/subscription-plans/` | Create plan + nested costs/features |
+| PATCH | `/shop/api/admin/subscription-plans/{id}/` | Update plan; upsert nested arrays |
+| DELETE | `/shop/api/admin/subscription-plans/{id}/` | Delete plan (409 if subscribers) |
+| PATCH | `/shop/api/admin/plan-costs/{id}/` | Update plan cost |
+| DELETE | `/shop/api/admin/plan-costs/{id}/` | Delete plan cost (409 if in use) |
+| PATCH | `/shop/api/admin/plan-features/{id}/` | Update plan feature link |
+| DELETE | `/shop/api/admin/plan-features/{id}/` | Delete plan feature (409 if usage) |
 
 ### Optional / alternate endpoints
 
