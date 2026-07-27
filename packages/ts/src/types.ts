@@ -103,7 +103,11 @@ export type SubscriptionPlanCatalogItem = {
   grace_period?: number;
   partner_id?: number | null;
   partner_code?: string | null;
+  /** Present only when `?includes=subscribed_plan_cost_id` */
+  subscribed_plan_cost_id?: string | null;
   tags?: string[];
+  /** GeoJSON MultiPolygon or null */
+  service_area?: Record<string, unknown> | null;
   costs?: PlanCostSummary[];
   features?: FeatureUsageSummary[];
 };
@@ -133,6 +137,7 @@ export type AdminPlanFeatureWrite = {
   quota?: number | null;
   overage_rate?: string | null;
   rate_limit?: number | null;
+  meta?: Record<string, unknown> | null;
   pricing_tiers?: AdminPricingTierInput[];
 };
 
@@ -144,6 +149,8 @@ export type AdminSubscriptionPlanWrite = {
   is_feature_based?: boolean;
   tags?: string[];
   partner?: number | null;
+  /** GeoJSON MultiPolygon or null */
+  service_area?: Record<string, unknown> | null;
   costs?: AdminPlanCostWrite[];
   features?: AdminPlanFeatureWrite[];
 };
@@ -162,6 +169,7 @@ export type FeatureUsageSummary = {
   quota?: number | null;
   rate_limit?: number | null;
   overage_rate?: string | null;
+  meta?: Record<string, unknown>;
   pricing_tiers?: unknown[];
   used?: number;
   remaining?: number;
@@ -212,6 +220,8 @@ export type SubscriptionWebhookPayload = {
 
 export type UserSubscription = {
   id: string;
+  subscribed_partner_id?: number | null;
+  subscribed_partner_code?: string | null;
   active?: boolean;
   cancelled?: boolean;
   billing_retry_exhausted?: boolean;

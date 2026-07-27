@@ -33,7 +33,7 @@ Requires PyPI credentials and version bump in `pyproject.toml`.
 
 The dashboard admin token (`FIKASHOP_ADMIN_ACCESS_TOKEN`) identifies the **business admin**, not arbitrary end-customers. Acting on a customer wallet without their OIDC session requires either:
 
-- Your backend holding/proxying the user’s refresh token (host responsibility), or
+- Your backend holding/proxying the user's refresh token (host responsibility), or
 - A future dedicated service-account / delegation API (P3 — see `contracts/PRODUCTION.md`)
 
 Do not use the admin token in mobile or web client bundles.

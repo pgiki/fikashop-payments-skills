@@ -83,15 +83,19 @@ Base path: `/subscriptions/api/subscriptions/`.
 
 ### Dashboard + catalog
 
-1. `GET …/subscriptions/` — all subscriptions + wallet `balance` (filter on `active`, `cancelled`, `unpaid_invoices`)
-2. `GET …/plans/` — read-only catalog; optional `?tags=` filter (AND); subscribe with `costs[].slug` (not plan slug)
-3. `GET …/plan-options/?for_subscription={uuid}` — same-plan billing options for change-plan UI
+1. `GET …/subscriptions/` — all subscriptions + wallet `balance` (filter on `active`, `cancelled`, `unpaid_invoices`); optional `?point=`
+2. `GET …/plans/` — read-only catalog; `?tags=` (AND), `?point=lng,lat` (geofence), `?includes=subscribed_plan_cost_id`; subscribe with `costs[].slug`
+3. `GET …/plans/{plan_id}/` — single plan (same scope rules)
+4. `GET …/usage-by-plan/{plan_id}/` or `…/usage-by-id/{subscription_id}/` — subscription + `feature_usage`
+5. `GET …/plan-options/?for_subscription={uuid}` — same-plan billing options for change-plan UI
 
 Fixtures: [subscriptions-list.json](contracts/fixtures/subscriptions-list.json), [subscription-plans.json](contracts/fixtures/subscription-plans.json)
 
 ### Subscribe
 
 `POST …/` with `{ "plan_cost_slug": "pro-monthly" }` — immediate wallet charge via `PlanManager`.
+
+**Billing vs subscribed partner:** wallet debits use `X-Partner-Id` / `?partner=` (stored in `meta.partner_id`). Shop-specific entitlements use optional body `subscribed_partner` (returned as `subscribed_partner_id` / `subscribed_partner_code`). See [SUBSCRIPTIONS.md § Subscribed vs billing](contracts/SUBSCRIPTIONS.md#subscribed-partner-vs-billing-partner).
 
 | Result | Meaning | Next step |
 |--------|---------|-----------|
@@ -104,13 +108,13 @@ Fixtures: [subscribe-response.json](contracts/fixtures/subscribe-response.json),
 
 1. `GET …/features/{code}/access/` — read `allowed` before each gated action
 2. If allowed, perform action, then `POST …/features/{code}/bill/` with `{ "quantity": 1 }`
-3. Pass `?subscription_id=` when user has multiple active subscriptions
+3. Pass `?subscription_id=` when user has multiple active subscriptions; `?subscribed_partner=` when entitlements are shop-specific; `?point=` to require a covering plan fence
 4. Handle `402` (insufficient wallet → Checkout A), `429` (quota exceeded, no overage)
 5. Pass **`Idempotency-Key`** on bill for safe retries (24h cache)
 
 Fixtures: [feature-access-allowed.json](contracts/fixtures/feature-access-allowed.json), [feature-bill-response.json](contracts/fixtures/feature-bill-response.json)
 
-Optional: `billFeatureUsage(client, code, { idempotencyKey, subscriptionId, quantity })`
+Optional: `checkFeatureAccess(client, code, { subscriptionId, subscribedPartner, point })` · `billFeatureUsage(client, code, { idempotencyKey, subscriptionId, subscribedPartner, point, quantity })`
 
 ### Change / cancel / history
 
@@ -147,10 +151,10 @@ Examples: [express_webhook.ts](docs/examples/express_webhook.ts) · [webhook-hos
 | Methods | `getDepositPaymentMethods`, `getInputFieldsForMethod`, `validateFieldValues`, `defaultFieldValues` |
 | Checkout A | `walletDeposit` (`idempotencyKey`), `buildDepositPayload` |
 | Checkout B | `getPublicInvoice`, `initiatePublicPay`, `capturePayment`, `buildCapturePayload`, `waitForInvoicePaid` |
-| Subscriptions | `listSubscriptions`, `getSubscriptionPlans` (`{ tags }`), `subscribeToPlan` (`clientReference`, `metadata`, `idempotencyKey`), `changePlan`, `cancelSubscription`, `getPlanOptions`, `getSubscriptionTransactions` |
+| Subscriptions | `listSubscriptions`, `getSubscriptionPlans` / `getSubscriptionPlan` (`tags`, `point`, `includes`), `getUsageByPlan` / `getUsageById`, `subscribeToPlan` (`subscribedPartner`, `clientReference`, `metadata`, `idempotencyKey`), `changePlan`, `cancelSubscription`, `getPlanOptions`, `getSubscriptionTransactions` |
 | Admin catalog (server) | `createAdminSubscriptionPlan`, `updateAdminSubscriptionPlan`, `deleteAdminSubscriptionPlan`, `createAdminPlanCost`, `updateAdminPlanCost`, `deleteAdminPlanCost`, `createAdminPlanFeature`, `updateAdminPlanFeature`, `deleteAdminPlanFeature` — [ADMIN-SUBSCRIPTIONS.md](contracts/ADMIN-SUBSCRIPTIONS.md) |
 | Recovery polls | `pollSubscriptionActive`, `waitForWalletCredit` |
-| Features | `checkFeatureAccess`, `billFeatureUsage` (`idempotencyKey`, `subscriptionId`) |
+| Features | `checkFeatureAccess`, `billFeatureUsage` (`idempotencyKey`, `subscriptionId`, `subscribedPartner`) |
 | Errors | `formatWalletFailure`, `formatSubscriptionFailure`, `formatGatewayFailure`, `describeGatewayFailure` |
 | Webhooks | `verifyUnifiedFikashopSignature`, `parseUnifiedWebhookEnvelope`, `processUnifiedWebhook`, `createWebhookRouter`, `InMemoryUnifiedWebhookHandler` (TS); `process_unified_webhook`, `create_webhook_router` (Python) |
 
@@ -160,4 +164,4 @@ Examples: [checkout-invoice.ts](docs/examples/checkout-invoice.ts) · [subscribe
 
 ## Pitfalls
 
-Wrong submit keys · JSON re-serialize before HMAC · webhooks on mobile · missing invoice correlation · `/shop/api` prefix on `/payments/process/` · subscribing before wallet has funds · ignoring `public_pay_blocked` · **`402` on feature bill** · omitting `subscription_id` for multi-sub users · expecting bill idempotency without **`Idempotency-Key`** · paying dunning invoice then expecting a second wallet debit on restore · admin token in client bundles
+Wrong submit keys · JSON re-serialize before HMAC · webhooks on mobile · missing invoice correlation · `/shop/api` prefix on `/payments/process/` · subscribing before wallet has funds · ignoring `public_pay_blocked` · **`402` on feature bill** · omitting `subscription_id` for multi-sub users · omitting `subscribed_partner` on feature access/bill when entitlements are shop-specific · expecting bill idempotency without **`Idempotency-Key`** · paying dunning invoice then expecting a second wallet debit on restore · admin token in client bundles

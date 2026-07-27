@@ -1,6 +1,6 @@
 # Fixtures index
 
-Example payloads aligned with [fikashop-api](https://github.com/fikachu/fikashop) serializers and provider responses. Use these when building UI or validating SDK helpers — field names and shapes match production API contracts.
+Example payloads aligned with [fikashop-api](https://github.com/pgiki/fikashop) serializers and provider responses. Use these when building UI or validating SDK helpers — field names and shapes match production API contracts.
 
 **Related:** [REFERENCE.md](../REFERENCE.md) · [SUBSCRIPTIONS.md](../SUBSCRIPTIONS.md) · [ADMIN-SUBSCRIPTIONS.md](../ADMIN-SUBSCRIPTIONS.md) · [status-map.json](../status-map.json)
 
@@ -8,7 +8,7 @@ Example payloads aligned with [fikashop-api](https://github.com/fikachu/fikashop
 
 | File | Endpoint | Notes |
 |------|----------|-------|
-| [partners-list.json](partners-list.json) | `GET /shop/api/admin/partners/` | Paginated admin partners; use `code` or `id` for `X-Partner-Id`. Includes `url`, `wallet_id` (UUID), `business_type_kind`. |
+| [partners-list.json](partners-list.json) | `GET /shop/api/admin/partners/` | Paginated admin partners; use `code` or `id` for `X-Partner-Id`. Includes `url`, `wallet_id` (UUID), `business_type` + nested `storefront`. |
 
 ## Payment methods & balance
 
@@ -21,9 +21,13 @@ Example payloads aligned with [fikashop-api](https://github.com/fikachu/fikashop
 
 | File | Endpoint | Notes |
 |------|----------|-------|
-| [subscriptions-list.json](subscriptions-list.json) | `GET /subscriptions/api/subscriptions/` | `balance` + `subscriptions[]` with `meta`, `feature_usage[]`, billing dates, `links`. |
-| [subscription-plans.json](subscription-plans.json) | `GET /subscriptions/api/subscriptions/plans/` | Plan catalog; `tags[]`; `costs[]` with `slug`; `features[]` with quotas and tiers. |
+| [subscriptions-list.json](subscriptions-list.json) | `GET /subscriptions/api/subscriptions/` | `balance` + `subscriptions[]` with `meta`, `feature_usage[]`, billing dates, `links`. Optional `?point=` geo filter. |
+| [subscription-plans.json](subscription-plans.json) | `GET /subscriptions/api/subscriptions/plans/` | Plan catalog; `tags[]`; `partner_*`; `service_area`; `costs[]`; `features[]` (+ `meta`). |
+| [subscription-plan-detail.json](subscription-plan-detail.json) | `GET …/plans/{plan_id}/` | Single plan (same shape as catalog row). |
+| [subscription-plans-with-subscribed-cost.json](subscription-plans-with-subscribed-cost.json) | `GET …/plans/?includes=subscribed_plan_cost_id` | Catalog with opt-in `subscribed_plan_cost_id` (UUID or null). |
 | [subscription-plans-filtered-by-tag.json](subscription-plans-filtered-by-tag.json) | `GET /subscriptions/api/subscriptions/plans/?tags=enterprise` | Subset when filtering by tag (AND). |
+| [usage-by-plan-response.json](usage-by-plan-response.json) | `GET …/usage-by-plan/{plan_id}/` | `UserSubscription` + `feature_usage[]` (also usage-by-id). |
+| [point-invalid-400.json](point-invalid-400.json) | `GET …/plans/?point=bad` (400) | Malformed `?point=` query. |
 | [subscribe-response.json](subscribe-response.json) | `POST /subscriptions/api/subscriptions/` (201) | Activated subscription after successful wallet charge. |
 | [subscribe-response-inactive-dunning.json](subscribe-response-inactive-dunning.json) | `POST /subscriptions/api/subscriptions/` (201) | Underfunded subscribe: `active: false`, `unpaid_invoices[]`. |
 | [subscribe-error-unknown-slug.json](subscribe-error-unknown-slug.json) | `POST /subscriptions/api/subscriptions/` (400) | Unknown `plan_cost_slug` without bootstrap `plan` block. |

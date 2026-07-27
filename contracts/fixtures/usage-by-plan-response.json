@@ -2,13 +2,13 @@
   "id": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
   "subscribed_partner_id": 42,
   "subscribed_partner_code": "shop-a",
-  "active": false,
-  "cancelled": true,
+  "active": true,
+  "cancelled": false,
   "billing_retry_exhausted": false,
   "payment_failure_notify_count": 0,
   "date_billing_start": "2026-05-01T00:00:00Z",
   "date_billing_end": null,
-  "date_billing_last": "2026-06-14T11:30:00Z",
+  "date_billing_last": "2026-05-01T00:00:00Z",
   "date_billing_next": "2026-07-01T00:00:00Z",
   "meta": {
     "partner_id": 42,
@@ -32,7 +32,27 @@
     }
   },
   "unpaid_invoices": [],
-  "feature_usage": [],
+  "feature_usage": [
+    {
+      "feature_code": "sms_outbound",
+      "feature_name": "SMS outbound",
+      "feature_type": "quota",
+      "pricing_model": "flat",
+      "unit": "sms",
+      "enabled": true,
+      "quota": 100,
+      "rate_limit": null,
+      "overage_rate": "0.0500",
+      "meta": {},
+      "pricing_tiers": [],
+      "used": 12,
+      "remaining": 88
+    }
+  ],
+  "recovery": {
+    "recommended_action": "none",
+    "dunning_invoice_uuid": null
+  },
   "links": {
     "invoices": "/invoices/api/invoices/",
     "wallet_transactions": "/subscriptions/api/subscriptions/transactions/",

@@ -19,10 +19,12 @@ The catalog is **read-only** for typical integrators — use slugs from `GET …
 
 ```text
 Bearer + X-Partner-Id
-  → GET …/plans/              pick costs[].slug
+  → GET …/plans/?point=lng,lat&includes=subscribed_plan_cost_id
+  → GET …/plans/{plan_id}/     plan detail (optional)
   → (optional) GET …/balance/
-  → POST …/                   subscribe
-  → GET …/features/{code}/access/   gate UI / API
+  → POST …/                   subscribe (costs[].slug)
+  → GET …/usage-by-plan/{plan_id}/   or …/usage-by-id/{subscription_id}/
+  → GET …/features/{code}/access/   gate UI / API (?point= optional)
   → POST …/features/{code}/bill/    record usage (+ wallet if overage)
   → (optional) POST …/change-plan/ or …/cancel/
 ```
@@ -62,6 +64,25 @@ Persisted on subscribe; used for renewals when HTTP partner context is absent:
 | `partner_code` | Denormalized partner code |
 | `dunning_paid_invoice_uuids` | Invoice UUIDs already applied to restore billing |
 
+### Subscribed partner vs billing partner
+
+Two partner scopes apply on subscribe:
+
+| Scope | Source | Stored on |
+|-------|--------|-----------|
+| **Billing** | `?partner=` / `X-Partner-Id` | `meta.partner_id` — wallet debits and renewals |
+| **Subscribed partner** | JSON body `subscribed_partner` (int PK or string code) | Top-level `subscribed_partner_id` / `subscribed_partner_code` on the subscription — feature access and entitlements |
+
+```json
+POST /subscriptions/api/subscriptions/?partner=platform-wallet
+{
+  "plan_cost_slug": "pro-monthly",
+  "subscribed_partner": "shop-a"
+}
+```
+
+Use the same int-or-code resolution as request partner scoping. Omit body `subscribed_partner` when entitlements are not shop-specific. Feature access/bill endpoints filter by `?subscribed_partner=` when present (billing partner context does not select the subscription row).
+
 ---
 
 ## Endpoint summary
@@ -70,12 +91,15 @@ Base path: **`/subscriptions/api/subscriptions/`**
 
 | Method | Path | Purpose | Fixture(s) |
 |--------|------|---------|------------|
-| GET | `/` | List subscriptions + wallet `balance` | [subscriptions-list.json](fixtures/subscriptions-list.json) |
+| GET | `/` | List subscriptions + wallet `balance`; optional `?point=` geo filter | [subscriptions-list.json](fixtures/subscriptions-list.json) |
 | POST | `/` | Subscribe (`plan_cost_slug`) | [subscribe-response.json](fixtures/subscribe-response.json), [subscribe-response-inactive-dunning.json](fixtures/subscribe-response-inactive-dunning.json) |
-| GET | `/plans/` | Plan catalog (`tags[]`, `costs[]`, `features[]`); optional `?tags=` filter (AND) | [subscription-plans.json](fixtures/subscription-plans.json), [subscription-plans-filtered-by-tag.json](fixtures/subscription-plans-filtered-by-tag.json) |
-| GET | `/features/{code}/access/` | Check feature access | [feature-access-allowed.json](fixtures/feature-access-allowed.json) |
-| POST | `/features/{code}/bill/` | Bill feature usage | [feature-bill-response.json](fixtures/feature-bill-response.json) |
-| GET | `/plan-options/` | Alternate costs | [plan-options-all.json](fixtures/plan-options-all.json) |
+| GET | `/plans/` | Plan catalog; `?tags=`, `?point=`, `?includes=subscribed_plan_cost_id` | [subscription-plans.json](fixtures/subscription-plans.json), [subscription-plans-filtered-by-tag.json](fixtures/subscription-plans-filtered-by-tag.json), [subscription-plans-with-subscribed-cost.json](fixtures/subscription-plans-with-subscribed-cost.json) |
+| GET | `/plans/{plan_id}/` | Single plan (same catalog rules) | [subscription-plan-detail.json](fixtures/subscription-plan-detail.json) |
+| GET | `/usage-by-plan/{plan_id}/` | Active `UserSubscription` for plan (+ `feature_usage`); optional `?point=` | [usage-by-plan-response.json](fixtures/usage-by-plan-response.json) |
+| GET | `/usage-by-id/{subscription_id}/` | Caller’s `UserSubscription` by id | [usage-by-plan-response.json](fixtures/usage-by-plan-response.json) |
+| GET | `/features/{code}/access/` | Check feature access; optional `?point=` | [feature-access-allowed.json](fixtures/feature-access-allowed.json) |
+| POST | `/features/{code}/bill/` | Bill feature usage; optional `?point=` | [feature-bill-response.json](fixtures/feature-bill-response.json) |
+| GET | `/plan-options/` | Alternate costs; optional `?point=` | [plan-options-all.json](fixtures/plan-options-all.json) |
 | POST | `/change-plan/` | Change billing option | [change-plan-response.json](fixtures/change-plan-response.json) |
 | POST | `/cancel/` | Cancel subscription | [cancel-response.json](fixtures/cancel-response.json) |
 | GET | `/balance/` | Balance + deposit methods | [balance-with-methods.json](fixtures/balance-with-methods.json) |
@@ -123,10 +147,13 @@ Idempotency-Key: {uuid}
 
 {
   "plan_cost_slug": "pro-monthly",
+  "subscribed_partner": "shop-a",
   "client_reference": "order-8842",
   "metadata": { "cart_id": "cart-99" }
 }
 ```
+
+Optional body `subscribed_partner` — integer PK or string code for the **subscribed partner** business (see [Subscribed vs billing](#subscribed-partner-vs-billing-partner)). Examples: `"subscribed_partner": 42` or `"subscribed_partner": "shop-a"`.
 
 Optional correlation: [subscribe-request-with-client-reference.json](fixtures/subscribe-request-with-client-reference.json). `client_reference` and `metadata` persist on `UserSubscription.meta` and appear in `subscription.*` webhooks.
 
@@ -158,13 +185,57 @@ GET /subscriptions/api/subscriptions/plans/?tags=enterprise
 GET /subscriptions/api/subscriptions/plans/?tags=enterprise,featured
 ```
 
-Each plan includes `tags: string[]` (tag names), optional `partner_id` / `partner_code`, and billing options in `costs[]`. Tags are assigned via the **admin catalog API** ([ADMIN-SUBSCRIPTIONS.md](ADMIN-SUBSCRIPTIONS.md)) or Django admin; integrators read and filter only.
+### Geofence (`?point=`)
+
+```http
+GET /subscriptions/api/subscriptions/plans/?point=39.28,-6.82
+```
+
+Convention: **`longitude,latitude`** (SRID 4326). When `point` is set, only plans with a non-null `service_area` that **covers** the point are returned (unfenced / null `service_area` plans are **excluded**). Same filter applies to list subscriptions, plan detail, plan-options, usage-by-plan, and feature access/bill. Malformed `point` → `400` ([point-invalid-400.json](fixtures/point-invalid-400.json)). Missing `point` → no geo filter.
+
+Catalog responses may include GeoJSON `service_area` (`MultiPolygon` or `null`).
+
+### Optional includes (`?includes=`)
+
+Comma-separated optional fields. Supported today:
+
+| Include | Field | Meaning |
+|---------|-------|---------|
+| `subscribed_plan_cost_id` | `subscribed_plan_cost_id` | Active `PlanCost` UUID for the caller on that plan, or `null` if not subscribed. **Omitted** unless requested. |
+
+```http
+GET /subscriptions/api/subscriptions/plans/?includes=subscribed_plan_cost_id
+GET /subscriptions/api/subscriptions/plans/{plan_id}/?includes=subscribed_plan_cost_id
+```
+
+Fixture: [subscription-plans-with-subscribed-cost.json](fixtures/subscription-plans-with-subscribed-cost.json).
+
+Each plan includes `tags: string[]`, optional `partner_id` / `partner_code`, `service_area`, billing options in `costs[]`, and `features[]` (with optional `meta`). Tags are assigned via the **admin catalog API** ([ADMIN-SUBSCRIPTIONS.md](ADMIN-SUBSCRIPTIONS.md)) or Django admin; integrators read and filter only.
 
 With **`X-Partner-Id`**, the catalog returns partner-specific plans plus platform templates (`partner_id: null`). Subscribe and change-plan resolve `plan_cost_slug` within that partner scope.
 
-**Response `200`:** [subscription-plans.json](fixtures/subscription-plans.json) — includes `tags[]`, `costs[]`, and `features[]` with quotas, overage rates, and pricing tiers.
+**Response `200`:** [subscription-plans.json](fixtures/subscription-plans.json) — includes `tags[]`, `costs[]`, and `features[]` with quotas, overage rates, pricing tiers, and `meta`.
 
 Filtered example: [subscription-plans-filtered-by-tag.json](fixtures/subscription-plans-filtered-by-tag.json) for `?tags=enterprise`.
+
+### Plan detail
+
+```http
+GET /subscriptions/api/subscriptions/plans/{plan_id}/
+GET /subscriptions/api/subscriptions/plans/{plan_id}/?point=39.28,-6.82
+```
+
+Same partner + geo visibility as the list. **Response `200`:** [subscription-plan-detail.json](fixtures/subscription-plan-detail.json). Unknown / out-of-scope id → `404`.
+
+### Usage by plan / subscription id
+
+```http
+GET /subscriptions/api/subscriptions/usage-by-plan/{plan_id}/
+GET /subscriptions/api/subscriptions/usage-by-plan/{plan_id}/?point=39.28,-6.82
+GET /subscriptions/api/subscriptions/usage-by-id/{subscription_id}/
+```
+
+Returns the caller’s `UserSubscription` (`UserSubscriptionSerializer`, including `feature_usage[]`). `usage-by-plan` prefers the latest active non-cancelled row for that plan. No match → `404`. Fixture: [usage-by-plan-response.json](fixtures/usage-by-plan-response.json).
 
 Example: [plans-by-tag.ts](../docs/examples/plans-by-tag.ts)
 
@@ -175,6 +246,7 @@ Example: [plans-by-tag.ts](../docs/examples/plans-by-tag.ts)
 ```http
 GET /subscriptions/api/subscriptions/plan-options/
 GET /subscriptions/api/subscriptions/plan-options/?for_subscription={uuid}
+GET /subscriptions/api/subscriptions/plan-options/?point=39.28,-6.82
 ```
 
 | Query | Response fixture |
@@ -230,7 +302,13 @@ GET /subscriptions/api/subscriptions/features/sms_outbound/access/
 Authorization: Bearer {access_token}
 ```
 
-Optional: `?subscription_id={uuid}` when the user has multiple active subscriptions. Without it, the **most recently started** active subscription is used.
+Optional query params when selecting which subscription row to use:
+
+- `?subscription_id={uuid}` — when the user has multiple active subscriptions
+- `?subscribed_partner={id|code}` — when entitlements are shop-specific (does **not** use billing `X-Partner-Id` for row selection)
+- `?point=lng,lat` — only consider subscriptions whose plan `service_area` covers the point (same geo rules as catalog)
+
+Without `subscription_id` / `subscribed_partner`, the **most recently started** active subscription is used (after geo filter when `point` is set).
 
 | Scenario | Status | Fixture |
 |----------|--------|---------|
@@ -255,7 +333,7 @@ Content-Type: application/json
 { "quantity": 1 }
 ```
 
-Optional: `?subscription_id={uuid}`. `quantity` defaults to `1`, max `100`.
+Optional query params: `?subscription_id={uuid}` and/or `?subscribed_partner={id|code}` (see [§7](#7-feature-access-read-only)). `quantity` defaults to `1`, max `100`.
 
 | Scenario | Status | Fixture |
 |----------|--------|---------|
@@ -273,7 +351,7 @@ Optional: `?subscription_id={uuid}`. `quantity` defaults to `1`, max `100`.
 | `rate` | Windowed `remaining` | Increments within window; no wallet charge |
 | `usage` | Usage counters | Always debits wallet per `overage_rate` / tiers |
 
-**Concurrency:** no idempotency key on bill. Bill immediately after a successful action, or accept `402`/`429` if another request consumed quota first. After overage with wallet debit, `remaining` may be **negative**.
+**Concurrency:** send header `Idempotency-Key` on bill for safe retries (24h cache). Bill immediately after a successful action, or accept `402`/`429` if another request consumed quota first. After overage with wallet debit, `remaining` may be **negative**.
 
 ### HTTP status matrix
 
@@ -402,6 +480,7 @@ Register: `POST /shop/api/admin/webhooks/endpoints/` with `X-Partner-Id`.
 - Record usage with `POST …/features/{code}/bill/` after successful actions
 - Handle `unpaid_invoices[]` when `active` is false
 - Pass `?subscription_id=` when user has multiple active subscriptions
+- Pass `?subscribed_partner=` on feature access/bill when entitlements are shop-specific
 - Use wallet deposit for balance changes; use public invoice pay for dunning collection
 
 ---

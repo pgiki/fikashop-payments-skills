@@ -30,7 +30,8 @@ async function subscribeWithTopUp(
   });
   client.configurePartner(process.env.FIKASHOP_API_URL ?? 'https://api.fikashop.app', partnerCode);
 
-  const subResp = await subscribeToPlan(client, planCostSlug);
+  // Billing scope: configurePartner / X-Partner-Id. Entitlements: optional subscribedPartner.
+  const subResp = await subscribeToPlan(client, planCostSlug, { subscribedPartner: partnerCode });
   if (subResp.ok && subResp.data?.active) {
     return { step: 'subscribed' as const, subscription: subResp.data };
   }
@@ -76,7 +77,7 @@ async function subscribeWithTopUp(
     return { step: 'redirect' as const, url: depositResp.data.redirect_url };
   }
 
-  const retryResp = await subscribeToPlan(client, planCostSlug);
+  const retryResp = await subscribeToPlan(client, planCostSlug, { subscribedPartner: partnerCode });
   if (!retryResp.ok) {
     throw new Error(retryResp.problem ?? 'Subscribe failed after top-up');
   }

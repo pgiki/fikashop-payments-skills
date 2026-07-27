@@ -7,6 +7,9 @@ declare const PATHS: {
     readonly balance: "/subscriptions/api/subscriptions/balance/";
     readonly walletDeposit: "/subscriptions/api/subscriptions/wallet-deposit/";
     readonly plans: "/subscriptions/api/subscriptions/plans/";
+    readonly plan: (planId: string) => string;
+    readonly usageByPlan: (planId: string) => string;
+    readonly usageById: (subscriptionId: string) => string;
     readonly planOptions: "/subscriptions/api/subscriptions/plan-options/";
     readonly changePlan: "/subscriptions/api/subscriptions/change-plan/";
     readonly cancel: "/subscriptions/api/subscriptions/cancel/";
@@ -41,9 +44,23 @@ export declare function walletDeposit(client: FikashopClient, input: {
 export declare function listSubscriptions(client: FikashopClient): Promise<ApiResponse<SubscriptionListResponse, SubscriptionListResponse>>;
 export declare function getSubscriptionPlans(client: FikashopClient, options?: {
     tags?: string[];
+    point?: string;
+    includes?: string[];
 }): Promise<ApiResponse<SubscriptionPlanCatalogItem[], SubscriptionPlanCatalogItem[]>>;
-export declare function getPlanOptions(client: FikashopClient, subscriptionId: string): Promise<ApiResponse<PlanCostSummary[], PlanCostSummary[]>>;
+export declare function getSubscriptionPlan(client: FikashopClient, planId: string, options?: {
+    point?: string;
+    includes?: string[];
+}): Promise<ApiResponse<SubscriptionPlanCatalogItem, SubscriptionPlanCatalogItem>>;
+export declare function getUsageByPlan(client: FikashopClient, planId: string, options?: {
+    point?: string;
+}): Promise<ApiResponse<UserSubscription, UserSubscription>>;
+export declare function getUsageById(client: FikashopClient, subscriptionId: string): Promise<ApiResponse<UserSubscription, UserSubscription>>;
+export declare function getPlanOptions(client: FikashopClient, subscriptionId: string, options?: {
+    point?: string;
+}): Promise<ApiResponse<PlanCostSummary[], PlanCostSummary[]>>;
 export declare function subscribeToPlan(client: FikashopClient, planCostSlug: string, opts?: {
+    /** Subscribed partner — integer PK or string code */
+    subscribedPartner?: number | string;
     clientReference?: string;
     metadata?: Record<string, unknown>;
     idempotencyKey?: string;
@@ -68,10 +85,18 @@ export declare function getSubscriptionPaymentMethods(client: FikashopClient, pa
 }): Promise<ApiResponse<import("./types.js").PaymentMethod[], import("./types.js").PaymentMethod[]>>;
 export declare function checkFeatureAccess(client: FikashopClient, featureCode: string, opts?: {
     subscriptionId?: string;
+    /** Subscribed partner — integer PK or string code */
+    subscribedPartner?: number | string;
+    /** `longitude,latitude` geofence */
+    point?: string;
 }): Promise<ApiResponse<FeatureAccessResponse, FeatureAccessResponse>>;
 export declare function billFeatureUsage(client: FikashopClient, featureCode: string, opts?: {
     quantity?: number;
     subscriptionId?: string;
+    /** Subscribed partner — integer PK or string code */
+    subscribedPartner?: number | string;
+    /** `longitude,latitude` geofence */
+    point?: string;
     idempotencyKey?: string;
 }): Promise<ApiResponse<FeatureBillResponse, FeatureBillResponse>>;
 export declare function listInvoices(client: FikashopClient, params?: Record<string, unknown>): Promise<ApiResponse<unknown, unknown>>;

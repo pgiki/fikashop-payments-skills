@@ -44,7 +44,7 @@ ln -sf "$(pwd)/fikashop-payments-skills" .cursor/skills/fikashop-payments-skills
 Or clone standalone:
 
 ```bash
-git clone https://github.com/fikachu/fikashop-payments-skills.git
+git clone https://github.com/pgiki/fikashop-payments-skills.git
 ln -s "$(pwd)/fikashop-payments-skills" ~/.cursor/skills/fikashop-payments-skills
 ```
 

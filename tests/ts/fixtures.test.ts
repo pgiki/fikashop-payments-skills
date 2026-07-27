@@ -13,6 +13,10 @@ const SUBSCRIPTION_FIXTURE_KEYS: Record<string, string[]> = {
   'subscriptions-list.json': ['balance', 'subscriptions'],
   'subscription-plans.json': [],
   'subscription-plans-filtered-by-tag.json': [],
+  'subscription-plan-detail.json': ['id', 'slug', 'costs'],
+  'subscription-plans-with-subscribed-cost.json': [],
+  'usage-by-plan-response.json': ['id', 'subscription', 'feature_usage'],
+  'point-invalid-400.json': ['detail'],
   'subscribe-response.json': ['id', 'active', 'subscription'],
   'subscribe-response-inactive-dunning.json': ['id', 'active', 'unpaid_invoices', 'recovery'],
   'subscribe-request-with-client-reference.json': ['plan_cost_slug', 'client_reference'],
@@ -68,6 +72,7 @@ describe('subscription fixtures', () => {
       if (
         name === 'subscription-plans.json' ||
         name === 'subscription-plans-filtered-by-tag.json' ||
+        name === 'subscription-plans-with-subscribed-cost.json' ||
         name === 'subscription-payment-methods.json' ||
         name.startsWith('plan-options')
       ) {

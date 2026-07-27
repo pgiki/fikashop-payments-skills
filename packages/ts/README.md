@@ -11,7 +11,7 @@ API contract: [contracts/SUBSCRIPTIONS.md](../../contracts/SUBSCRIPTIONS.md) · 
 | Area | Functions |
 |------|-----------|
 | Subscriptions | `subscribeToPlan`, `listSubscriptions`, `changePlan`, `cancelSubscription`, `checkFeatureAccess`, `billFeatureUsage` |
-| Catalog | `getSubscriptionPlans(client, { tags })` — optional `?tags=` filter (AND) |
+| Catalog | `getSubscriptionPlans` / `getSubscriptionPlan` — `tags`, `point`, `includes: ['subscribed_plan_cost_id']`; `getUsageByPlan` / `getUsageById` |
 | Checkout | `walletDeposit`, `getPublicInvoice`, `initiatePublicPay`, `capturePayment` |
 | Async recovery | `pollSubscriptionActive`, `waitForWalletCredit`, `waitForInvoicePaid` |
 | Idempotency | Pass `idempotencyKey` on subscribe, deposit, and feature bill |

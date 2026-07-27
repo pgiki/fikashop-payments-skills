@@ -30,12 +30,12 @@ Example client setup: [docs/examples/admin-subscription-catalog.ts](../docs/exam
 | `null` | **Platform template** — shown to all partners on `GET …/plans/` |
 | `{partner_id}` | **Partner catalog** — only when `X-Partner-Id` matches |
 
-- Admin **list/create** with `X-Partner-Id` scopes to that partner’s plans (not platform templates unless you omit the header for platform-only admin).
+- Admin **list/create** with `X-Partner-Id` scopes to that partner's plans (not platform templates unless you omit the header for platform-only admin).
 - Admin **POST** sets `partner` from `X-Partner-Id` by default. Pass `"partner": null` in the body to create a platform-wide plan (staff only).
 - Public **`GET …/plans/`** with `X-Partner-Id` returns **partner plans + platform templates**.
 - **Subscribe / change-plan** resolve `plan_cost_slug` with partner scope (partner-specific cost wins when applicable).
 
-Each plan includes optional read-only `partner_id` / `partner_code` on catalog and admin responses.
+Each plan includes optional read-only `partner_id` / `partner_code` on catalog and admin responses. Optional GeoJSON `service_area` (`MultiPolygon`, nullable) geofences the public catalog when clients pass `?point=lng,lat`.
 
 ---
 
@@ -43,8 +43,9 @@ Each plan includes optional read-only `partner_id` / `partner_code` on catalog a
 
 ```
 SubscriptionPlan (slug unique per partner)
+  ├── service_area?  ← MultiPolygon GeoJSON (null = no public geo match when ?point= set)
   ├── PlanCost[]     ← customers subscribe via plan_cost_slug = cost.slug
-  ├── PlanFeature[]  ← feature quotas, tiers, overage
+  ├── PlanFeature[]  ← feature quotas, tiers, overage, optional meta JSON
   └── PlanTag[]      ← tags for ?tags= filter on public catalog
 ```
 
@@ -84,6 +85,8 @@ Fixture: [admin-plan-create-full-request.json](fixtures/admin-plan-create-full-r
 Response: [admin-plan-create-full-response.json](fixtures/admin-plan-create-full-response.json)
 
 Nested `costs[]` and `features[]` (including `pricing_tiers[]`) are created in a **single transaction**. Validation errors roll back the entire request.
+
+Optional plan body field **`service_area`**: GeoJSON `MultiPolygon` (or `null` to clear on patch). Optional feature field **`meta`**: JSON object for integrator-defined metadata (returned on public catalog `features[]`).
 
 Minimal create (tags only): [admin-plan-create-request.json](fixtures/admin-plan-create-request.json).
 

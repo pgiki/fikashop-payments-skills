@@ -13,7 +13,7 @@ import {
 async function gateAndBillSms(
   accessToken: string,
   partnerCode: string,
-  subscriptionId?: string,
+  opts?: { subscriptionId?: string; subscribedPartner?: number | string },
 ) {
   const client = createFikashopClient({
     baseUrl: process.env.FIKASHOP_API_URL ?? 'https://api.fikashop.app',
@@ -21,7 +21,7 @@ async function gateAndBillSms(
   });
   client.configurePartner(process.env.FIKASHOP_API_URL ?? 'https://api.fikashop.app', partnerCode);
 
-  const accessResp = await checkFeatureAccess(client, 'sms_outbound', { subscriptionId });
+  const accessResp = await checkFeatureAccess(client, 'sms_outbound', opts);
   if (!accessResp.ok) {
     throw new Error(accessResp.problem ?? 'Feature access check failed');
   }
@@ -37,7 +37,7 @@ async function gateAndBillSms(
 
   const billResp = await billFeatureUsage(client, 'sms_outbound', {
     quantity: 1,
-    subscriptionId,
+    ...opts,
   });
 
   if (billResp.status === 402) {

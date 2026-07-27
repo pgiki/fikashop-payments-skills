@@ -25,6 +25,38 @@ function idempotencyConfig(idempotencyKey?: string) {
   return { headers: { 'Idempotency-Key': idempotencyKey.trim() } };
 }
 
+function featureQueryParams(opts?: {
+  subscriptionId?: string;
+  /** Subscribed partner — integer PK or string code */
+  subscribedPartner?: number | string;
+  /** `longitude,latitude` geofence */
+  point?: string;
+}) {
+  const params: Record<string, string | number> = {};
+  if (opts?.subscriptionId) params.subscription_id = opts.subscriptionId;
+  if (opts?.subscribedPartner != null && opts.subscribedPartner !== '') {
+    params.subscribed_partner = opts.subscribedPartner;
+  }
+  if (opts?.point?.trim()) params.point = opts.point.trim();
+  return Object.keys(params).length > 0 ? params : undefined;
+}
+
+function catalogQueryParams(options?: {
+  tags?: string[];
+  /** `longitude,latitude` */
+  point?: string;
+  /** e.g. `['subscribed_plan_cost_id']` */
+  includes?: string[];
+}) {
+  const params: Record<string, string> = {};
+  const tags = options?.tags?.map((t) => t.trim()).filter(Boolean).join(',');
+  if (tags) params.tags = tags;
+  if (options?.point?.trim()) params.point = options.point.trim();
+  const includes = options?.includes?.map((i) => i.trim()).filter(Boolean).join(',');
+  if (includes) params.includes = includes;
+  return Object.keys(params).length > 0 ? params : undefined;
+}
+
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -35,6 +67,12 @@ const PATHS = {
   balance: '/subscriptions/api/subscriptions/balance/',
   walletDeposit: '/subscriptions/api/subscriptions/wallet-deposit/',
   plans: '/subscriptions/api/subscriptions/plans/',
+  plan: (planId: string) =>
+    `/subscriptions/api/subscriptions/plans/${encodeURIComponent(planId)}/`,
+  usageByPlan: (planId: string) =>
+    `/subscriptions/api/subscriptions/usage-by-plan/${encodeURIComponent(planId)}/`,
+  usageById: (subscriptionId: string) =>
+    `/subscriptions/api/subscriptions/usage-by-id/${encodeURIComponent(subscriptionId)}/`,
   planOptions: '/subscriptions/api/subscriptions/plan-options/',
   changePlan: '/subscriptions/api/subscriptions/change-plan/',
   cancel: '/subscriptions/api/subscriptions/cancel/',
@@ -95,29 +133,65 @@ export async function listSubscriptions(client: FikashopClient) {
 
 export async function getSubscriptionPlans(
   client: FikashopClient,
-  options?: { tags?: string[] },
+  options?: { tags?: string[]; point?: string; includes?: string[] },
 ) {
-  const tags = options?.tags?.map((t) => t.trim()).filter(Boolean).join(',');
   return client.get<SubscriptionPlanCatalogItem[]>(
     PATHS.plans,
-    tags ? { tags } : undefined,
+    catalogQueryParams(options),
   );
 }
 
-export async function getPlanOptions(client: FikashopClient, subscriptionId: string) {
-  return client.get<PlanCostSummary[]>(PATHS.planOptions, { for_subscription: subscriptionId });
+export async function getSubscriptionPlan(
+  client: FikashopClient,
+  planId: string,
+  options?: { point?: string; includes?: string[] },
+) {
+  return client.get<SubscriptionPlanCatalogItem>(
+    PATHS.plan(planId),
+    catalogQueryParams(options),
+  );
+}
+
+export async function getUsageByPlan(
+  client: FikashopClient,
+  planId: string,
+  options?: { point?: string },
+) {
+  return client.get<UserSubscription>(
+    PATHS.usageByPlan(planId),
+    options?.point?.trim() ? { point: options.point.trim() } : undefined,
+  );
+}
+
+export async function getUsageById(client: FikashopClient, subscriptionId: string) {
+  return client.get<UserSubscription>(PATHS.usageById(subscriptionId));
+}
+
+export async function getPlanOptions(
+  client: FikashopClient,
+  subscriptionId: string,
+  options?: { point?: string },
+) {
+  const params: Record<string, string> = { for_subscription: subscriptionId };
+  if (options?.point?.trim()) params.point = options.point.trim();
+  return client.get<PlanCostSummary[]>(PATHS.planOptions, params);
 }
 
 export async function subscribeToPlan(
   client: FikashopClient,
   planCostSlug: string,
   opts?: {
+    /** Subscribed partner — integer PK or string code */
+    subscribedPartner?: number | string;
     clientReference?: string;
     metadata?: Record<string, unknown>;
     idempotencyKey?: string;
   },
 ) {
   const body: Record<string, unknown> = { plan_cost_slug: planCostSlug };
+  if (opts?.subscribedPartner != null && opts.subscribedPartner !== '') {
+    body.subscribed_partner = opts.subscribedPartner;
+  }
   if (opts?.clientReference) body.client_reference = opts.clientReference;
   if (opts?.metadata && Object.keys(opts.metadata).length > 0) body.metadata = opts.metadata;
   return client.post<UserSubscription>(PATHS.subscriptions, body, idempotencyConfig(opts?.idempotencyKey));
@@ -164,18 +238,34 @@ export async function getSubscriptionPaymentMethods(
 export async function checkFeatureAccess(
   client: FikashopClient,
   featureCode: string,
-  opts?: { subscriptionId?: string },
+  opts?: {
+    subscriptionId?: string;
+    /** Subscribed partner — integer PK or string code */
+    subscribedPartner?: number | string;
+    /** `longitude,latitude` geofence */
+    point?: string;
+  },
 ) {
-  const params = opts?.subscriptionId ? { subscription_id: opts.subscriptionId } : undefined;
-  return client.get<FeatureAccessResponse>(PATHS.featureAccess(featureCode), params);
+  return client.get<FeatureAccessResponse>(
+    PATHS.featureAccess(featureCode),
+    featureQueryParams(opts),
+  );
 }
 
 export async function billFeatureUsage(
   client: FikashopClient,
   featureCode: string,
-  opts?: { quantity?: number; subscriptionId?: string; idempotencyKey?: string },
+  opts?: {
+    quantity?: number;
+    subscriptionId?: string;
+    /** Subscribed partner — integer PK or string code */
+    subscribedPartner?: number | string;
+    /** `longitude,latitude` geofence */
+    point?: string;
+    idempotencyKey?: string;
+  },
 ) {
-  const params = opts?.subscriptionId ? { subscription_id: opts.subscriptionId } : undefined;
+  const params = featureQueryParams(opts);
   return client.post<FeatureBillResponse>(
     PATHS.featureBill(featureCode),
     { quantity: opts?.quantity ?? 1 },

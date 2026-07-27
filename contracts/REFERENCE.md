@@ -120,9 +120,11 @@ TS helpers: `getInputFieldsForMethod`, `defaultFieldValues`, `validateFieldValue
 
 Subscriptions bill from the user's **partner-scoped wallet**. Base path: **`/subscriptions/api/subscriptions/`**
 
-- **Catalog:** `GET …/plans/` → subscribe with `costs[].slug` (not plan slug). Optional `?tags=` filters plans that have all listed tags (AND). Response includes `tags[]`.
-- **Subscribe:** `POST …/` → `active: true` if funded; else `active: false` + `unpaid_invoices[]`
-- **Features:** `GET …/features/{code}/access/` then `POST …/features/{code}/bill/` after each gated action
+**Billing vs subscribed partner:** `X-Partner-Id` / `?partner=` selects the wallet (stored as `meta.partner_id`). Optional subscribe body `subscribed_partner` and feature query `?subscribed_partner=` select the subscription row for entitlements (`subscribed_partner_id` / `subscribed_partner_code` on responses).
+
+- **Catalog:** `GET …/plans/` → subscribe with `costs[].slug` (not plan slug). Optional `?tags=` (AND), `?point=lng,lat` (geofence; null `service_area` excluded), `?includes=subscribed_plan_cost_id` (active PlanCost UUID or null). Detail: `GET …/plans/{plan_id}/`. Usage: `GET …/usage-by-plan/{plan_id}/`, `GET …/usage-by-id/{subscription_id}/`.
+- **Subscribe:** `POST …/` → `active: true` if funded; else `active: false` + `unpaid_invoices[]`; optional body `subscribed_partner`
+- **Features:** `GET …/features/{code}/access/` then `POST …/features/{code}/bill/` after each gated action; optional `?subscription_id=`, `?subscribed_partner=`, `?point=`
 - **Manage:** `change-plan/`, `cancel/`, `transactions/`
 - **Recovery:** wallet top-up (Path A) or pay dunning invoice uuid via Checkout B (Path B) — see [SUBSCRIPTIONS.md § Recovery](SUBSCRIPTIONS.md#recovery-playbook-underfunded-subscribe--failed-renewal)
 
@@ -201,7 +203,10 @@ Canonical status lists: [status-map.json](status-map.json)
 |--------|------|---------|
 | GET | `/shop/api/admin/partners/` | Businesses linked to user → `X-Partner-Id` |
 | GET | `/subscriptions/api/subscriptions/` | List subscriptions + wallet balance — [subscriptions-list.json](fixtures/subscriptions-list.json) |
-| GET | `/subscriptions/api/subscriptions/plans/` | Plan catalog — `?tags=` (AND filter), `tags[]` on each plan — [subscription-plans.json](fixtures/subscription-plans.json) |
+| GET | `/subscriptions/api/subscriptions/plans/` | Plan catalog — `?tags=`, `?point=`, `?includes=subscribed_plan_cost_id` — [subscription-plans.json](fixtures/subscription-plans.json) |
+| GET | `/subscriptions/api/subscriptions/plans/{plan_id}/` | Plan detail — [subscription-plan-detail.json](fixtures/subscription-plan-detail.json) |
+| GET | `/subscriptions/api/subscriptions/usage-by-plan/{plan_id}/` | Usage for plan — [usage-by-plan-response.json](fixtures/usage-by-plan-response.json) |
+| GET | `/subscriptions/api/subscriptions/usage-by-id/{subscription_id}/` | Usage by subscription id |
 | GET | `/subscriptions/api/subscriptions/features/{code}/access/` | Feature access — [feature-access-allowed.json](fixtures/feature-access-allowed.json) |
 | POST | `/subscriptions/api/subscriptions/features/{code}/bill/` | Bill usage — [feature-bill-response.json](fixtures/feature-bill-response.json) |
 | GET | `/subscriptions/api/subscriptions/plan-options/` | Alternate costs — [plan-options-all.json](fixtures/plan-options-all.json) |

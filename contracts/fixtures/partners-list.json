@@ -10,10 +10,23 @@
       "name": "My New Shop",
       "email": "owner@my-new-shop.co.tz",
       "phone_number": "+255700000001",
-      "business_type_kind": "retail",
       "is_active": true,
       "is_open": true,
-      "wallet_id": "a3f2c891-0b4e-4d6a-9c1e-8f7b2d4e6a10"
+      "wallet_id": "a3f2c891-0b4e-4d6a-9c1e-8f7b2d4e6a10",
+      "storefront": {
+        "mode": "retail_shop",
+        "primary_cta": "shop",
+        "catalog_layout": "product_grid",
+        "copy_pack": "retail_shop",
+        "commerce_enabled": true,
+        "booking_enabled": false,
+        "printable_menu_enabled": false,
+        "modifiers_mode": "limited",
+        "quantity_stepper_enabled": false,
+        "staff_picker_enabled": false,
+        "job_site_address_required": false,
+        "quote_flow_enabled": false
+      }
     },
     {
       "id": 42,
@@ -22,10 +35,23 @@
       "name": "Acme Mobility",
       "email": "billing@acme-mobility.co.tz",
       "phone_number": "+255712345678",
-      "business_type_kind": "mobility",
       "is_active": true,
       "is_open": true,
-      "wallet_id": "7c9e6679-7425-40de-944b-e07fc1f90ae7"
+      "wallet_id": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
+      "storefront": {
+        "mode": "retail_shop",
+        "primary_cta": "shop",
+        "catalog_layout": "product_grid",
+        "copy_pack": "retail_shop",
+        "commerce_enabled": true,
+        "booking_enabled": false,
+        "printable_menu_enabled": false,
+        "modifiers_mode": "limited",
+        "quantity_stepper_enabled": false,
+        "staff_picker_enabled": false,
+        "job_site_address_required": false,
+        "quote_flow_enabled": false
+      }
     }
   ]
 }

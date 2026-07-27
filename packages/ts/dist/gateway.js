@@ -5,6 +5,29 @@ function idempotencyConfig(idempotencyKey) {
         return {};
     return { headers: { 'Idempotency-Key': idempotencyKey.trim() } };
 }
+function featureQueryParams(opts) {
+    const params = {};
+    if (opts?.subscriptionId)
+        params.subscription_id = opts.subscriptionId;
+    if (opts?.subscribedPartner != null && opts.subscribedPartner !== '') {
+        params.subscribed_partner = opts.subscribedPartner;
+    }
+    if (opts?.point?.trim())
+        params.point = opts.point.trim();
+    return Object.keys(params).length > 0 ? params : undefined;
+}
+function catalogQueryParams(options) {
+    const params = {};
+    const tags = options?.tags?.map((t) => t.trim()).filter(Boolean).join(',');
+    if (tags)
+        params.tags = tags;
+    if (options?.point?.trim())
+        params.point = options.point.trim();
+    const includes = options?.includes?.map((i) => i.trim()).filter(Boolean).join(',');
+    if (includes)
+        params.includes = includes;
+    return Object.keys(params).length > 0 ? params : undefined;
+}
 function sleep(ms) {
     return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -14,6 +37,9 @@ const PATHS = {
     balance: '/subscriptions/api/subscriptions/balance/',
     walletDeposit: '/subscriptions/api/subscriptions/wallet-deposit/',
     plans: '/subscriptions/api/subscriptions/plans/',
+    plan: (planId) => `/subscriptions/api/subscriptions/plans/${encodeURIComponent(planId)}/`,
+    usageByPlan: (planId) => `/subscriptions/api/subscriptions/usage-by-plan/${encodeURIComponent(planId)}/`,
+    usageById: (subscriptionId) => `/subscriptions/api/subscriptions/usage-by-id/${encodeURIComponent(subscriptionId)}/`,
     planOptions: '/subscriptions/api/subscriptions/plan-options/',
     changePlan: '/subscriptions/api/subscriptions/change-plan/',
     cancel: '/subscriptions/api/subscriptions/cancel/',
@@ -56,14 +82,28 @@ export async function listSubscriptions(client) {
     return client.get(PATHS.subscriptions);
 }
 export async function getSubscriptionPlans(client, options) {
-    const tags = options?.tags?.map((t) => t.trim()).filter(Boolean).join(',');
-    return client.get(PATHS.plans, tags ? { tags } : undefined);
+    return client.get(PATHS.plans, catalogQueryParams(options));
 }
-export async function getPlanOptions(client, subscriptionId) {
-    return client.get(PATHS.planOptions, { for_subscription: subscriptionId });
+export async function getSubscriptionPlan(client, planId, options) {
+    return client.get(PATHS.plan(planId), catalogQueryParams(options));
+}
+export async function getUsageByPlan(client, planId, options) {
+    return client.get(PATHS.usageByPlan(planId), options?.point?.trim() ? { point: options.point.trim() } : undefined);
+}
+export async function getUsageById(client, subscriptionId) {
+    return client.get(PATHS.usageById(subscriptionId));
+}
+export async function getPlanOptions(client, subscriptionId, options) {
+    const params = { for_subscription: subscriptionId };
+    if (options?.point?.trim())
+        params.point = options.point.trim();
+    return client.get(PATHS.planOptions, params);
 }
 export async function subscribeToPlan(client, planCostSlug, opts) {
     const body = { plan_cost_slug: planCostSlug };
+    if (opts?.subscribedPartner != null && opts.subscribedPartner !== '') {
+        body.subscribed_partner = opts.subscribedPartner;
+    }
     if (opts?.clientReference)
         body.client_reference = opts.clientReference;
     if (opts?.metadata && Object.keys(opts.metadata).length > 0)
@@ -91,11 +131,10 @@ export async function getSubscriptionPaymentMethods(client, params) {
     return client.get(PATHS.paymentMethods, params);
 }
 export async function checkFeatureAccess(client, featureCode, opts) {
-    const params = opts?.subscriptionId ? { subscription_id: opts.subscriptionId } : undefined;
-    return client.get(PATHS.featureAccess(featureCode), params);
+    return client.get(PATHS.featureAccess(featureCode), featureQueryParams(opts));
 }
 export async function billFeatureUsage(client, featureCode, opts) {
-    const params = opts?.subscriptionId ? { subscription_id: opts.subscriptionId } : undefined;
+    const params = featureQueryParams(opts);
     return client.post(PATHS.featureBill(featureCode), { quantity: opts?.quantity ?? 1 }, { ...idempotencyConfig(opts?.idempotencyKey), ...(params ? { params } : {}) });
 }
 export async function listInvoices(client, params) {
