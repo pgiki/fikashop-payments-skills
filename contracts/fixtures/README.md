@@ -52,9 +52,10 @@ Staff token + `X-Partner-Id`. See [ADMIN-SUBSCRIPTIONS.md](../ADMIN-SUBSCRIPTION
 |------|----------|-------|
 | [plan-options-all.json](plan-options-all.json) | `GET /subscriptions/api/subscriptions/plan-options/` | All plan costs across catalog. |
 | [plan-options-for-subscription.json](plan-options-for-subscription.json) | `GET …/plan-options/?for_subscription=` | Same-plan alternate costs (excludes current). |
-| [change-plan-request.json](change-plan-request.json) | POST body | `subscription_id`, `target_plan_cost_slug`, `effective_mode`. |
+| [change-plan-request.json](change-plan-request.json) | POST body | `subscription_id`, `target_plan_cost_slug`, `effective_mode` (`immediate` \| `next_cycle`). |
 | [change-plan-response.json](change-plan-response.json) | `POST …/change-plan/` (200) | Updated subscription after immediate change. |
-| [change-plan-error-next-cycle.json](change-plan-error-next-cycle.json) | `POST …/change-plan/` (400) | `effective_mode=next_cycle` not supported. |
+| [change-plan-next-cycle-response.json](change-plan-next-cycle-response.json) | `POST …/change-plan/` (200, `next_cycle`) | Current plan unchanged; `pending_plan_cost_*` set. |
+| [change-plan-error-insufficient-funds.json](change-plan-error-insufficient-funds.json) | `POST …/change-plan/` (402) | Immediate change underfunded — plan unchanged. |
 | [cancel-request.json](cancel-request.json) | POST body | `{ "subscription_id": "uuid" }`. |
 | [cancel-response.json](cancel-response.json) | `POST …/cancel/` (200) | `cancelled: true`, `active: false`. |
 

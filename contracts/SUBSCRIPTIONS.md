@@ -100,7 +100,7 @@ Base path: **`/subscriptions/api/subscriptions/`**
 | GET | `/features/{code}/access/` | Check feature access; optional `?point=` | [feature-access-allowed.json](fixtures/feature-access-allowed.json) |
 | POST | `/features/{code}/bill/` | Bill feature usage; optional `?point=` | [feature-bill-response.json](fixtures/feature-bill-response.json) |
 | GET | `/plan-options/` | Alternate costs; optional `?point=` | [plan-options-all.json](fixtures/plan-options-all.json) |
-| POST | `/change-plan/` | Change billing option | [change-plan-response.json](fixtures/change-plan-response.json) |
+| POST | `/change-plan/` | Change billing option (`immediate` prorate / `next_cycle` pending) | [change-plan-response.json](fixtures/change-plan-response.json), [change-plan-next-cycle-response.json](fixtures/change-plan-next-cycle-response.json) |
 | POST | `/cancel/` | Cancel subscription | [cancel-response.json](fixtures/cancel-response.json) |
 | GET | `/balance/` | Balance + deposit methods | [balance-with-methods.json](fixtures/balance-with-methods.json) |
 | GET | `/payment-methods/` | Deposit methods only | [subscription-payment-methods.json](fixtures/subscription-payment-methods.json) |
@@ -273,10 +273,14 @@ Content-Type: application/json
 }
 ```
 
-- `effective_mode` defaults to `"immediate"` — switches plan, updates billing dates, **no wallet charge**, no proration
-- `"next_cycle"` returns **400**: [change-plan-error-next-cycle.json](fixtures/change-plan-error-next-cycle.json)
+| `effective_mode` | Behavior |
+|------------------|----------|
+| `immediate` (default) | Unused-time **credit** on the current plan + charge **full** new `PlanCost.cost` + restart `date_billing_last` / `date_billing_next`. Insufficient funds → **402** (plan unchanged). |
+| `next_cycle` | Keep current plan and billing dates; set `pending_plan_cost_*`. Applied on renewal (`process_due`): bill new cost, then swap. |
 
-**Response `200`:** [change-plan-response.json](fixtures/change-plan-response.json)
+**Response `200`:** [change-plan-response.json](fixtures/change-plan-response.json) (includes `pending_plan_cost_id` / `pending_plan_cost_slug` when scheduled).
+
+**Response `402`:** [change-plan-error-insufficient-funds.json](fixtures/change-plan-error-insufficient-funds.json) — immediate change only.
 
 ---
 
@@ -461,7 +465,8 @@ Register: `POST /shop/api/admin/webhooks/endpoints/` with `X-Partner-Id`.
 |-----------|--------|--------|
 | Not authenticated | `401` | Re-authenticate |
 | Bad / missing `plan_cost_slug` | `400` | Use slug from `GET …/plans/` |
-| `next_cycle` change plan | `400` | Use `immediate` |
+| `next_cycle` change plan | `200` | Pending applied on renewal |
+| Immediate change underfunded | `402` | Top up wallet; plan unchanged |
 | Feature not billable | `400` | Use access only |
 | No active subscription | `403` | Subscribe first |
 | Unknown feature code | `404` | Use codes from catalog |

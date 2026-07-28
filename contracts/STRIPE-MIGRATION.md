@@ -8,7 +8,7 @@ For teams migrating from Stripe Billing / Checkout patterns.
 | Price | `PlanCost` slug (`plan_cost_slug`) |
 | Subscription | `UserSubscription` (`POST /subscriptions/api/subscriptions/`) |
 | Customer portal (cancel) | `POST …/cancel/` |
-| Subscription update | `POST …/change-plan/` (`immediate` only; no proration) |
+| Subscription update | `POST …/change-plan/` (`immediate` with unused-time credit + full new charge, or `next_cycle` pending until renewal) |
 | Invoice | Dunning `Invoice` linked via `subject` |
 | PaymentIntent / Charge | Wallet debit or `GatewayPayment` (deposit / invoice pay) |
 | Checkout Session | **Not provided** — use Checkout A (wallet deposit) or Checkout B (public invoice pay) |

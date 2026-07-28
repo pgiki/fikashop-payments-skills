@@ -198,16 +198,16 @@ export async function subscribeToPlan(
 }
 
 /**
- * Change billing option. Only `immediate` is supported — `next_cycle` returns HTTP 400.
- * @deprecated Use `effectiveMode: 'immediate'` only; `next_cycle` is rejected by the API.
+ * Change plan cost.
+ * - `immediate` — unused-time credit + charge full new plan + restart billing dates (402 if underfunded)
+ * - `next_cycle` — keep current plan; schedule pending until renewal
  */
 export async function changePlan(
   client: FikashopClient,
   input: {
     subscriptionId: string;
     targetPlanCostSlug: string;
-    /** @deprecated `next_cycle` returns HTTP 400 from the API */
-    effectiveMode?: 'immediate';
+    effectiveMode?: 'immediate' | 'next_cycle';
   },
 ) {
   return client.post<UserSubscription>(PATHS.changePlan, {

@@ -66,14 +66,14 @@ export declare function subscribeToPlan(client: FikashopClient, planCostSlug: st
     idempotencyKey?: string;
 }): Promise<ApiResponse<UserSubscription, UserSubscription>>;
 /**
- * Change billing option. Only `immediate` is supported — `next_cycle` returns HTTP 400.
- * @deprecated Use `effectiveMode: 'immediate'` only; `next_cycle` is rejected by the API.
+ * Change plan cost.
+ * - `immediate` — unused-time credit + charge full new plan + restart billing dates (402 if underfunded)
+ * - `next_cycle` — keep current plan; schedule pending until renewal
  */
 export declare function changePlan(client: FikashopClient, input: {
     subscriptionId: string;
     targetPlanCostSlug: string;
-    /** @deprecated `next_cycle` returns HTTP 400 from the API */
-    effectiveMode?: 'immediate';
+    effectiveMode?: 'immediate' | 'next_cycle';
 }): Promise<ApiResponse<UserSubscription, UserSubscription>>;
 export declare function cancelSubscription(client: FikashopClient, subscriptionId: string): Promise<ApiResponse<UserSubscription, UserSubscription>>;
 export declare function getSubscriptionTransactions(client: FikashopClient, params?: {

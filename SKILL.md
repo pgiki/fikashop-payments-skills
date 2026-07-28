@@ -118,7 +118,7 @@ Optional: `checkFeatureAccess(client, code, { subscriptionId, subscribedPartner,
 
 ### Change / cancel / history
 
-- Change: `POST …/change-plan/` — `effective_mode: "immediate"` only (`next_cycle` → 400); no wallet charge
+- Change: `POST …/change-plan/` — `immediate` (prorate credit + charge new + restart dates; `402` if underfunded) or `next_cycle` (schedule `pending_plan_cost_*` until renewal)
 - Cancel: `POST …/cancel/` with `subscription_id`
 - History: `GET …/transactions/?page=&size=`
 

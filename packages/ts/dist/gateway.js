@@ -111,8 +111,9 @@ export async function subscribeToPlan(client, planCostSlug, opts) {
     return client.post(PATHS.subscriptions, body, idempotencyConfig(opts?.idempotencyKey));
 }
 /**
- * Change billing option. Only `immediate` is supported — `next_cycle` returns HTTP 400.
- * @deprecated Use `effectiveMode: 'immediate'` only; `next_cycle` is rejected by the API.
+ * Change plan cost.
+ * - `immediate` — unused-time credit + charge full new plan + restart billing dates (402 if underfunded)
+ * - `next_cycle` — keep current plan; schedule pending until renewal
  */
 export async function changePlan(client, input) {
     return client.post(PATHS.changePlan, {

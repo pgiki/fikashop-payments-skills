@@ -200,6 +200,8 @@ export type UserSubscription = {
     id: string;
     subscribed_partner_id?: number | null;
     subscribed_partner_code?: string | null;
+    pending_plan_cost_id?: string | null;
+    pending_plan_cost_slug?: string | null;
     active?: boolean;
     cancelled?: boolean;
     billing_retry_exhausted?: boolean;

@@ -90,6 +90,6 @@ Webhook envelopes include `livemode: true|false`. Test PSP credentials and dev A
 
 ## Pitfalls
 
-- **No proration** on `change-plan` with `effective_mode: immediate` — full new plan cost applies on next cycle logic only; `next_cycle` returns HTTP 400
+- **Prorated `change-plan`:** `immediate` credits unused time and charges the full new plan (restart billing window); `next_cycle` schedules `pending_plan_cost` until renewal. Insufficient wallet → HTTP 402.
 - **Same `X-Partner-Id`** on subscribe, balance, deposit, feature bill, and transactions
 - **Never** put `FIKASHOP_ADMIN_ACCESS_TOKEN` in `EXPO_PUBLIC_*` or client bundles

@@ -1,0 +1,33 @@
+{
+  "detail": "Insufficient funds in wallet",
+  "id": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+  "subscribed_partner_id": 42,
+  "subscribed_partner_code": "shop-a",
+  "pending_plan_cost_id": null,
+  "pending_plan_cost_slug": null,
+  "active": true,
+  "cancelled": false,
+  "billing_retry_exhausted": false,
+  "payment_failure_notify_count": 0,
+  "date_billing_start": "2026-05-01T00:00:00Z",
+  "date_billing_end": null,
+  "date_billing_last": "2026-05-01T00:00:00Z",
+  "date_billing_next": "2026-06-01T00:00:00Z",
+  "subscription": {
+    "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "slug": "starter-monthly",
+    "cost": "10000.0000",
+    "currency": "TZS",
+    "recurrence_period": 1,
+    "recurrence_unit": "month",
+    "plan": {
+      "id": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
+      "slug": "starter",
+      "plan_name": "Starter",
+      "plan_description": "Starter access",
+      "grace_period": 3
+    }
+  },
+  "unpaid_invoices": [],
+  "feature_usage": []
+}
