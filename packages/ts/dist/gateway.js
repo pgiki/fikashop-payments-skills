@@ -78,8 +78,18 @@ export async function getDepositPaymentMethods(client) {
 export async function walletDeposit(client, input) {
     return client.post(PATHS.walletDeposit, buildDepositPayload(input), idempotencyConfig(input.idempotencyKey));
 }
-export async function listSubscriptions(client) {
-    return client.get(PATHS.subscriptions);
+export async function listSubscriptions(client, options) {
+    const params = {};
+    const tags = options?.tags?.map((t) => t.trim()).filter(Boolean).join(',');
+    if (tags)
+        params.tags = tags;
+    if (options?.point?.trim())
+        params.point = options.point.trim();
+    if (options?.page != null)
+        params.page = options.page;
+    if (options?.size != null)
+        params.size = options.size;
+    return client.get(PATHS.subscriptions, Object.keys(params).length > 0 ? params : undefined);
 }
 export async function getSubscriptionPlans(client, options) {
     return client.get(PATHS.plans, catalogQueryParams(options));

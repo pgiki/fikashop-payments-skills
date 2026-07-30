@@ -127,8 +127,20 @@ export async function walletDeposit(
   );
 }
 
-export async function listSubscriptions(client: FikashopClient) {
-  return client.get<SubscriptionListResponse>(PATHS.subscriptions);
+export async function listSubscriptions(
+  client: FikashopClient,
+  options?: { tags?: string[]; point?: string; page?: number; size?: number },
+) {
+  const params: Record<string, string | number> = {};
+  const tags = options?.tags?.map((t) => t.trim()).filter(Boolean).join(',');
+  if (tags) params.tags = tags;
+  if (options?.point?.trim()) params.point = options.point.trim();
+  if (options?.page != null) params.page = options.page;
+  if (options?.size != null) params.size = options.size;
+  return client.get<SubscriptionListResponse>(
+    PATHS.subscriptions,
+    Object.keys(params).length > 0 ? params : undefined,
+  );
 }
 
 export async function getSubscriptionPlans(

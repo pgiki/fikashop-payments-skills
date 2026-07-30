@@ -41,7 +41,12 @@ export declare function walletDeposit(client: FikashopClient, input: {
     inputFields?: PaymentFormValues;
     idempotencyKey?: string;
 }): Promise<ApiResponse<WalletDepositResponse, WalletDepositResponse>>;
-export declare function listSubscriptions(client: FikashopClient): Promise<ApiResponse<SubscriptionListResponse, SubscriptionListResponse>>;
+export declare function listSubscriptions(client: FikashopClient, options?: {
+    tags?: string[];
+    point?: string;
+    page?: number;
+    size?: number;
+}): Promise<ApiResponse<SubscriptionListResponse, SubscriptionListResponse>>;
 export declare function getSubscriptionPlans(client: FikashopClient, options?: {
     tags?: string[];
     point?: string;

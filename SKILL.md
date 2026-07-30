@@ -83,7 +83,7 @@ Base path: `/subscriptions/api/subscriptions/`.
 
 ### Dashboard + catalog
 
-1. `GET …/subscriptions/` — all subscriptions + wallet `balance` (filter on `active`, `cancelled`, `unpaid_invoices`); optional `?point=`
+1. `GET …/subscriptions/` — paginated subscriptions + wallet `balance` (`?page=`/`?size=`, `?tags=` AND, `?point=`); filter on `active`, `cancelled`, `unpaid_invoices`
 2. `GET …/plans/` — read-only catalog; `?tags=` (AND), `?point=lng,lat` (geofence), `?includes=subscribed_plan_cost_id`; subscribe with `costs[].slug`
 3. `GET …/plans/{plan_id}/` — single plan (same scope rules)
 4. `GET …/usage-by-plan/{plan_id}/` or `…/usage-by-id/{subscription_id}/` — subscription + `feature_usage`

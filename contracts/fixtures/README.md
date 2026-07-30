@@ -21,7 +21,7 @@ Example payloads aligned with [fikashop-api](https://github.com/pgiki/fikashop) 
 
 | File | Endpoint | Notes |
 |------|----------|-------|
-| [subscriptions-list.json](subscriptions-list.json) | `GET /subscriptions/api/subscriptions/` | `balance` + `subscriptions[]` with `meta`, `feature_usage[]`, billing dates, `links`. Optional `?point=` geo filter. |
+| [subscriptions-list.json](subscriptions-list.json) | `GET /subscriptions/api/subscriptions/` | Paginated `balance` + `subscriptions[]` (`page`, `count`, …). Optional `?tags=`, `?point=`, `?page=`/`?size=`. |
 | [subscription-plans.json](subscription-plans.json) | `GET /subscriptions/api/subscriptions/plans/` | Plan catalog; `tags[]`; `partner_*`; `service_area`; `costs[]`; `features[]` (+ `meta`). |
 | [subscription-plan-detail.json](subscription-plan-detail.json) | `GET …/plans/{plan_id}/` | Single plan (same shape as catalog row). |
 | [subscription-plans-with-subscribed-cost.json](subscription-plans-with-subscribed-cost.json) | `GET …/plans/?includes=subscribed_plan_cost_id` | Catalog with opt-in `subscribed_plan_cost_id` (UUID or null). |

@@ -1,5 +1,11 @@
 {
   "balance": "25000.0000",
+  "page": 1,
+  "is_paginated": false,
+  "next": null,
+  "previous": null,
+  "count": 1,
+  "total_pages": 1,
   "subscriptions": [
     {
       "id": "f47ac10b-58cc-4372-a567-0e02b2c3d479",

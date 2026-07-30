@@ -91,7 +91,7 @@ Base path: **`/subscriptions/api/subscriptions/`**
 
 | Method | Path | Purpose | Fixture(s) |
 |--------|------|---------|------------|
-| GET | `/` | List subscriptions + wallet `balance`; optional `?point=` geo filter | [subscriptions-list.json](fixtures/subscriptions-list.json) |
+| GET | `/` | List subscriptions + wallet `balance`; `?page=`/`?size=`, `?tags=` (AND), `?point=` | [subscriptions-list.json](fixtures/subscriptions-list.json) |
 | POST | `/` | Subscribe (`plan_cost_slug`) | [subscribe-response.json](fixtures/subscribe-response.json), [subscribe-response-inactive-dunning.json](fixtures/subscribe-response-inactive-dunning.json) |
 | GET | `/plans/` | Plan catalog; `?tags=`, `?point=`, `?includes=subscribed_plan_cost_id` | [subscription-plans.json](fixtures/subscription-plans.json), [subscription-plans-filtered-by-tag.json](fixtures/subscription-plans-filtered-by-tag.json), [subscription-plans-with-subscribed-cost.json](fixtures/subscription-plans-with-subscribed-cost.json) |
 | GET | `/plans/{plan_id}/` | Single plan (same catalog rules) | [subscription-plan-detail.json](fixtures/subscription-plan-detail.json) |
@@ -128,11 +128,18 @@ Base path: **`/subscriptions/api/subscriptions/`**
 
 ```http
 GET /subscriptions/api/subscriptions/
+GET /subscriptions/api/subscriptions/?page=1&size=15&tags=enterprise
 Authorization: Bearer {access_token}
 X-Partner-Id: {partner_code}
 ```
 
-**Response `200`:** [subscriptions-list.json](fixtures/subscriptions-list.json)
+| Query | Meaning |
+|-------|---------|
+| `page` / `size` | Pagination (same envelope fields as transactions; list key is `subscriptions`) |
+| `tags` | Comma-separated plan tags (AND) |
+| `point` | Optional geofence `longitude,latitude` |
+
+**Response `200`:** [subscriptions-list.json](fixtures/subscriptions-list.json) — includes `balance` plus `page`, `count`, `total_pages`, `next`, `previous`, `is_paginated`, and `subscriptions[]`.
 
 ---
 

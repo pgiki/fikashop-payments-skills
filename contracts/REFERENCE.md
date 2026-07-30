@@ -202,7 +202,7 @@ Canonical status lists: [status-map.json](status-map.json)
 | Method | Path | Purpose |
 |--------|------|---------|
 | GET | `/shop/api/admin/partners/` | Businesses linked to user → `X-Partner-Id` |
-| GET | `/subscriptions/api/subscriptions/` | List subscriptions + wallet balance — [subscriptions-list.json](fixtures/subscriptions-list.json) |
+| GET | `/subscriptions/api/subscriptions/` | List subscriptions + wallet balance (`?page=`/`?size=`, `?tags=`, `?point=`) — [subscriptions-list.json](fixtures/subscriptions-list.json) |
 | GET | `/subscriptions/api/subscriptions/plans/` | Plan catalog — `?tags=`, `?point=`, `?includes=subscribed_plan_cost_id` — [subscription-plans.json](fixtures/subscription-plans.json) |
 | GET | `/subscriptions/api/subscriptions/plans/{plan_id}/` | Plan detail — [subscription-plan-detail.json](fixtures/subscription-plan-detail.json) |
 | GET | `/subscriptions/api/subscriptions/usage-by-plan/{plan_id}/` | Usage for plan — [usage-by-plan-response.json](fixtures/usage-by-plan-response.json) |

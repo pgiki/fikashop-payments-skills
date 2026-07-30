@@ -258,6 +258,12 @@ export type FeatureBillResponse = {
 };
 export type SubscriptionListResponse = {
     balance?: string | number;
+    page?: number;
+    is_paginated?: boolean;
+    next?: string | null;
+    previous?: string | null;
+    count?: number;
+    total_pages?: number;
     subscriptions?: UserSubscription[];
 };
 export type SubscriptionTransaction = Record<string, unknown>;
