@@ -7,10 +7,8 @@ from typing import Any, Protocol
 
 from fikashop_gateway.handler import WebhookResult
 from fikashop_gateway.webhooks import (
-    UNIFIED_SIGNATURE_HEADER,
     derive_event_id,
     parse_json_body,
-    verify_fikashop_signature,
     verify_unified_fikashop_signature,
 )
 
@@ -55,21 +53,13 @@ def process_unified_webhook(
     *,
     raw_body: bytes,
     fikashop_signature: str,
-    legacy_signature: str,
     secret: str | None,
     handler: UnifiedWebhookHandler,
 ) -> WebhookResult:
     if secret:
-        verified = False
-        if fikashop_signature and verify_unified_fikashop_signature(
-            secret, raw_body, fikashop_signature
-        ):
-            verified = True
-        elif legacy_signature and verify_fikashop_signature(secret, raw_body, legacy_signature):
-            verified = True
-        if not verified:
-            if not fikashop_signature and not legacy_signature:
-                return WebhookResult(403, {"detail": "Missing webhook signature."})
+        if not fikashop_signature:
+            return WebhookResult(403, {"detail": "Missing webhook signature."})
+        if not verify_unified_fikashop_signature(secret, raw_body, fikashop_signature):
             return WebhookResult(403, {"detail": "Invalid webhook signature."})
 
     payload = parse_json_body(raw_body)

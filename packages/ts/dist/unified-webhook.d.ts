@@ -1,4 +1,4 @@
-import { FIKASHOP_SIGNATURE_HEADER, FIKASHOP_UNIFIED_SIGNATURE_HEADER } from './webhook-verify.js';
+import { FIKASHOP_UNIFIED_SIGNATURE_HEADER } from './webhook-verify.js';
 import type { WebhookRouterHandlers } from './webhook-router.js';
 export type UnifiedWebhookEvent = {
     eventId: string;
@@ -20,7 +20,6 @@ export declare function parseUnifiedWebhookEvent(payload: Record<string, unknown
 export type ProcessUnifiedWebhookInput = {
     rawBody: Buffer | Uint8Array | string;
     fikashopSignature?: string;
-    legacySignature?: string;
     secret?: string | null;
     handler: UnifiedWebhookHandler;
     /** When set, route to typed handlers after verify + dedupe (before handler.handleEvent). */
@@ -38,5 +37,5 @@ export declare class InMemoryUnifiedWebhookHandler implements UnifiedWebhookHand
     markReceived(event: UnifiedWebhookEvent, _payload: Record<string, unknown>): void;
     handleEvent(event: UnifiedWebhookEvent, _payload: Record<string, unknown>): Promise<void>;
 }
-export { FIKASHOP_SIGNATURE_HEADER, FIKASHOP_UNIFIED_SIGNATURE_HEADER };
+export { FIKASHOP_UNIFIED_SIGNATURE_HEADER };
 //# sourceMappingURL=unified-webhook.d.ts.map

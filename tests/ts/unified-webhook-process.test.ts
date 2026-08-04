@@ -21,7 +21,6 @@ describe('processUnifiedWebhook', () => {
     const result = await processUnifiedWebhook({
       rawBody: body,
       fikashopSignature: `t=${ts},v1=${sig}`,
-      legacySignature: '',
       secret: 'test-secret',
       handler,
       router: {

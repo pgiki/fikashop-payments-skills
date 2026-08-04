@@ -49,7 +49,6 @@ def test_process_unified_webhook_verifies_signature():
     result = process_unified_webhook(
         raw_body=body,
         fikashop_signature=header,
-        legacy_signature="",
         secret="test-secret",
         handler=handler,
     )

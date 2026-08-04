@@ -1,10 +1,8 @@
 import { createHash } from 'node:crypto';
 import type { UnifiedWebhookEnvelope } from './types.js';
 import {
-  FIKASHOP_SIGNATURE_HEADER,
   FIKASHOP_UNIFIED_SIGNATURE_HEADER,
   parseUnifiedWebhookEnvelope,
-  verifyFikashopSignature,
   verifyUnifiedFikashopSignature,
 } from './webhook-verify.js';
 import type { WebhookRouterHandlers } from './webhook-router.js';
@@ -78,7 +76,6 @@ export function parseUnifiedWebhookEvent(
 export type ProcessUnifiedWebhookInput = {
   rawBody: Buffer | Uint8Array | string;
   fikashopSignature?: string;
-  legacySignature?: string;
   secret?: string | null;
   handler: UnifiedWebhookHandler;
   /** When set, route to typed handlers after verify + dedupe (before handler.handleEvent). */
@@ -92,19 +89,12 @@ export async function processUnifiedWebhook(input: ProcessUnifiedWebhookInput): 
   const rawBody = input.rawBody;
   const secret = input.secret ?? null;
   const fikashopSignature = input.fikashopSignature ?? '';
-  const legacySignature = input.legacySignature ?? '';
 
   if (secret) {
-    let verified = false;
-    if (fikashopSignature && verifyUnifiedFikashopSignature(secret, rawBody, fikashopSignature)) {
-      verified = true;
-    } else if (legacySignature && verifyFikashopSignature(secret, rawBody, legacySignature)) {
-      verified = true;
+    if (!fikashopSignature) {
+      return { statusCode: 403, body: { detail: 'Missing webhook signature.' } };
     }
-    if (!verified) {
-      if (!fikashopSignature && !legacySignature) {
-        return { statusCode: 403, body: { detail: 'Missing webhook signature.' } };
-      }
+    if (!verifyUnifiedFikashopSignature(secret, rawBody, fikashopSignature)) {
       return { statusCode: 403, body: { detail: 'Invalid webhook signature.' } };
     }
   }
@@ -160,4 +150,4 @@ export class InMemoryUnifiedWebhookHandler implements UnifiedWebhookHandler {
   }
 }
 
-export { FIKASHOP_SIGNATURE_HEADER, FIKASHOP_UNIFIED_SIGNATURE_HEADER };
+export { FIKASHOP_UNIFIED_SIGNATURE_HEADER };
