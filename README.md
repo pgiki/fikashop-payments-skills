@@ -106,13 +106,10 @@ from fikashop_gateway import InMemoryUnifiedWebhookHandler, process_unified_webh
 result = process_unified_webhook(
     raw_body=request.body,
     fikashop_signature=request.headers.get("Fikashop-Signature", ""),
-    legacy_signature=request.headers.get("X-Fikachu-Signature", ""),
     secret=os.environ["BILLING_WEBHOOK_SECRET"],
     handler=InMemoryUnifiedWebhookHandler(),
 )
 ```
-
-Legacy flat payload (`{ invoice_id, status }`): use `process_payment_webhook` instead.
 
 Examples: [docs/examples](docs/examples/) — [checkout-invoice.ts](docs/examples/checkout-invoice.ts), [subscribe-and-topup.ts](docs/examples/subscribe-and-topup.ts), [feature-gating-and-bill.ts](docs/examples/feature-gating-and-bill.ts), [dunning-recovery.ts](docs/examples/dunning-recovery.ts), [webhook-host-handler.ts](docs/examples/webhook-host-handler.ts).
 

@@ -134,8 +134,7 @@ If `status === 'redirect'` on deposit, open `redirect_url`.
 
 Register endpoints via **`POST /shop/api/admin/webhooks/endpoints/`** — see [REFERENCE.md §6](contracts/REFERENCE.md#6-webhooks-server).
 
-- **`Fikashop-Signature`** = HMAC-SHA256 over `{timestamp}.{raw_body}` (preferred)
-- Legacy **`X-Fikachu-Signature`** still accepted during migration (body-only)
+- **`Fikashop-Signature`** = HMAC-SHA256 over `{timestamp}.{raw_body}`
 - Dedupe on envelope **`id`** (stable event id)
 - Route with **`createWebhookRouter`** / **`processUnifiedWebhook`** (TS) or **`create_webhook_router`** / **`process_unified_webhook`** (Python)
 - Subscription types: `subscription.created`, `subscription.updated`, `subscription.cancelled`, `subscription.past_due`

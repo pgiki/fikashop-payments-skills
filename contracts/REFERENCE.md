@@ -299,62 +299,40 @@ Correlate invoice pay via `data.object.external_invoice_reference` or `invoice_u
 
 Full reference: [fikashop-api docs/README-webhooks.md](../../fikashop-api/docs/README-webhooks.md)
 
-### 5b. Legacy / other webhook types
+### 5b. Inbound PSP webhooks
 
-| Type | URL | Status |
-|------|-----|--------|
-| **Legacy settlement** | Per-invoice `settlement_outcome_webhook_url` | Dual-written alongside unified events; deprecated |
-| **Host payment status** | `{host}/billing/v1/webhooks/fikashop` | Deprecated — use unified fikashop-api events |
-| **Inbound PSP** | `/payments/webhook/{variant}/` on fikashop-api | Not integrator responsibility |
+Provider callbacks hit **`/payments/webhook/{variant}/`** on fikashop-api. Integrators do not implement these; subscribe to unified outbound events instead.
 
 ### Setup
 
-1. Expose `POST https://{your-api}/billing/v1/webhooks/fikashop`  
-2. Set `BILLING_WEBHOOK_SECRET` on host; register same secret in fikashop partner settings  
-3. Store `invoice_id` when checkout starts for correlation  
-4. Restrict route to server/network only
+1. Register a partner webhook endpoint via **`POST /shop/api/admin/webhooks/endpoints/`**
+2. Expose your receiver URL (HTTPS) and set the same secret on the endpoint
+3. Correlate via `data.object.external_invoice_reference` / `invoice_uuid`
+4. Restrict the route to server/network only
 
 ### Verify
 
-- Header: `X-Fikachu-Signature` = `HMAC-SHA256(secret, raw_body).hexdigest()`  
-- Verify **raw request bytes** — do not re-serialize JSON (whitespace changes the signature)
+- Header: `Fikashop-Signature: t={unix},v1={hex}` over `{unix}.` + raw body bytes
+- Verify **raw request bytes** — do not re-serialize JSON
 
-Fixture: [fixtures/webhook-signed-request.txt](fixtures/webhook-signed-request.txt) (compact JSON body)
+Fixture: [fixtures/webhook-event-envelope.json](fixtures/webhook-event-envelope.json)
 
 ### Payload
 
-```json
-{ "invoice_id": "ext-inv-123", "status": "paid", "event_id": "optional" }
-```
-
-(`id` accepted instead of `invoice_id`.)
-
-Failed example: [fixtures/webhook-payment-failed.json](fixtures/webhook-payment-failed.json)
-
-| Raw status | Normalized |
-|------------|------------|
-| `open`, `pending`, `processing`, `unpaid`, `preauth` | `pending` |
-| `paid`, `settled`, `success`, `completed`, `confirmed`, `succeeded` | `paid` |
-| `failed`, `declined`, `canceled`, … | `failed` |
-
-Full map: [status-map.json](status-map.json)
+Stripe-style envelope (`id`, `type`, `data.object`) — see §5a.
 
 ### Handler steps
 
-1. Verify signature → `403` if invalid  
-2. Parse JSON; derive `event_id`  
+1. Verify `Fikashop-Signature` → `403` if invalid  
+2. Parse JSON; use envelope `id` as `event_id`  
 3. Duplicate `event_id` → `200 { "received": true, "duplicate": true }`  
-4. Missing `invoice_id` → `400`  
-5. Unknown status → `200` ack only  
-6. Else update local record by `invoice_id` → `200 { "received": true }`
+4. Route by `type` → `200 { "received": true }`
 
 **Libraries:** `packages/python` (`process_unified_webhook`, `create_webhook_router`, `verify_unified_fikashop_signature`), `packages/ts` (`processUnifiedWebhook`, `createWebhookRouter`, `verifyUnifiedFikashopSignature`, poll helpers).
 
 ### Local test
 
-```bash
-python -c "import hmac,hashlib; s=b'test-secret'; b=b'{\"invoice_id\":\"ext-inv-123\",\"status\":\"paid\"}'; print(hmac.new(s,b,hashlib.sha256).hexdigest())"
-```
+Use the signed envelope fixture and `verify_unified_fikashop_signature` / `verifyUnifiedFikashopSignature` against a `Fikashop-Signature` header.
 
 ---
 
@@ -378,4 +356,4 @@ See [fikashop-api storefront integration doc](../../fikashop-api/docs/storefront
 
 ## Out of scope
 
-Trip invoicing, `settlement_rules`, `/webhooks/fikashop/settlements`, wallet withdraw (`wallet-debit`).
+Trip invoicing, `settlement_rules`, wallet withdraw (`wallet-debit`).

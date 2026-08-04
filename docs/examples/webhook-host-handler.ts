@@ -55,12 +55,10 @@ export async function handleFikashopWebhook(req: {
 }): Promise<{ statusCode: number; body: Record<string, unknown> }> {
   const secret = process.env.FIKASHOP_WEBHOOK_SECRET ?? '';
   const fikashopSignature = String(req.headers['fikashop-signature'] ?? req.headers['Fikashop-Signature'] ?? '');
-  const legacySignature = String(req.headers['x-fikachu-signature'] ?? '');
 
   return processUnifiedWebhook({
     rawBody: req.rawBody,
     fikashopSignature,
-    legacySignature,
     secret: secret || null,
     handler,
     router,

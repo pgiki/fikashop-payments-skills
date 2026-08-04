@@ -52,13 +52,11 @@ routing_handler = _RoutingHandler()
 async def fikashop_webhook(
     request: Request,
     fikashop_signature: str | None = Header(default=None, alias="Fikashop-Signature"),
-    x_fikachu_signature: str | None = Header(default=None, alias="X-Fikachu-Signature"),
 ):
     raw_body = await request.body()
     result = process_unified_webhook(
         raw_body=raw_body,
         fikashop_signature=fikashop_signature or "",
-        legacy_signature=x_fikachu_signature or "",
         secret=SECRET or None,
         handler=routing_handler,
     )

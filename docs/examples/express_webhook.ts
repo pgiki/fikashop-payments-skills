@@ -4,7 +4,7 @@
  * npm install express
  * Use express.raw({ type: 'application/json' }) so HMAC matches the raw body.
  *
- * Prefer this over legacy flat `{ invoice_id, status }` payloads — see webhook-host-handler.ts.
+ * Prefer this over any flat `{ invoice_id, status }` payloads — use unified envelopes only.
  */
 import express from 'express';
 import { handleFikashopWebhook } from './webhook-host-handler.js';
