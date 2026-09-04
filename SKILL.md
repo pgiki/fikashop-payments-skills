@@ -75,6 +75,33 @@ Then `client.configurePartner(baseUrl, partnerId)` before wallet/invoice/subscri
 - `/payments/` is **root-mounted** — do not prefix with `/shop/api/`
 - Pay response includes `process_url` as well as `payment_reference`
 
+### Response envelope
+
+All payment responses (top-up, capture, wallet deposit) return the same shape:
+
+```json
+{
+  "status": "<semantic>",
+  "detail": "<human-readable>",
+  "meta": { ... }
+}
+```
+
+| `status` value | Meaning | Next action |
+|----------------|---------|-------------|
+| `"success"` | Synchronous confirm (e.g. LIPA Pay emulator) | Done — poll invoice or balance |
+| `"waiting"` | Async provider accepted (STK push sent) | Wait for webhook or poll |
+| `"redirect"` | User must visit `redirect_url` | Open URL in browser |
+| `"error"` | Validation or provider error | Show `detail` to user |
+
+Error responses add a `code` field (HTTP status) and omit `meta`:
+
+```json
+{ "status": "error", "code": 400, "detail": "Missing billing_phone for PayInTZ collection" }
+```
+
+Do not confuse `status` (semantic outcome) with the raw django-payments status in webhooks (`confirmed`, `error`, etc.). Canonical status mapping: [status-map.json](contracts/status-map.json)
+
 ## Subscriptions C
 
 Full detail: **[contracts/SUBSCRIPTIONS.md](contracts/SUBSCRIPTIONS.md)** — endpoints, fixtures, recovery, feature API, errors.
@@ -128,7 +155,7 @@ Optional: `checkFeatureAccess(client, code, { subscriptionId, subscribedPartner,
 - **Path B:** pay `unpaid_invoices[].uuid` via Checkout B → `invoice.payment_succeeded` restores subscription **without second wallet debit**
 - Watch `billing_retry_exhausted: true` — auto-billing paused until payment succeeds
 
-If `status === 'redirect'` on deposit, open `redirect_url`.
+If `status` is `'redirect'` on deposit, open `redirect_url`. If `'waiting'`, wait for webhook (STK push or async PSP). If `'success'`, payment confirmed synchronously.
 
 ## Webhook essentials (server)
 
@@ -163,4 +190,4 @@ Examples: [checkout-invoice.ts](docs/examples/checkout-invoice.ts) · [subscribe
 
 ## Pitfalls
 
-Wrong submit keys · JSON re-serialize before HMAC · webhooks on mobile · missing invoice correlation · `/shop/api` prefix on `/payments/process/` · subscribing before wallet has funds · ignoring `public_pay_blocked` · **`402` on feature bill** · omitting `subscription_id` for multi-sub users · omitting `subscribed_partner` on feature access/bill when entitlements are shop-specific · expecting bill idempotency without **`Idempotency-Key`** · paying dunning invoice then expecting a second wallet debit on restore · admin token in client bundles
+Wrong submit keys · JSON re-serialize before HMAC · webhooks on mobile · missing invoice correlation · `/shop/api` prefix on `/payments/process/` · subscribing before wallet has funds · ignoring `public_pay_blocked` · **`402` on feature bill** · omitting `subscription_id` for multi-sub users · omitting `subscribed_partner` on feature access/bill when entitlements are shop-specific · expecting bill idempotency without **`Idempotency-Key`** · paying dunning invoice then expecting a second wallet debit on restore · admin token in client bundles · confusing `status: "success"` (sync confirm) with `status: "waiting"` (async — wait for webhook) with raw webhook `confirmed` status

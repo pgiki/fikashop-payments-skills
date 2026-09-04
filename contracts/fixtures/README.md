@@ -84,7 +84,7 @@ Staff token + `X-Partner-Id`. See [ADMIN-SUBSCRIPTIONS.md](../ADMIN-SUBSCRIPTION
 |------|-----------|-------|
 | [wallet-deposit-request.json](wallet-deposit-request.json) | POST body | M-Pesa top-up with `variant` + `input_fields.billing_phone`. |
 | [wallet-deposit-request-tigo.json](wallet-deposit-request-tigo.json) | POST body | Tigo Pesa variant. |
-| [wallet-deposit-confirmed.json](wallet-deposit-confirmed.json) | POST response | Synchronous confirm: `status: confirmed`. |
+| [wallet-deposit-confirmed.json](wallet-deposit-confirmed.json) | POST response | Synchronous confirm: `status: success`. |
 | [wallet-deposit-redirect.json](wallet-deposit-redirect.json) | POST response | Card / hosted checkout redirect; `meta.intent: wallet-deposit`. |
 
 ## Checkout B — public invoice pay
@@ -96,7 +96,7 @@ Staff token + `X-Partner-Id`. See [ADMIN-SUBSCRIPTIONS.md](../ADMIN-SUBSCRIPTION
 | [public-pay-init.json](public-pay-init.json) | POST response (201) | `payment_reference`, `process_url`, `amount`, `currency`. |
 | [capture-request.json](capture-request.json) | POST body | Generic capture with text + checkbox `input_fields`. |
 | [capture-request-payintz.json](capture-request-payintz.json) | POST body | PayInTZ capture with optional `operator` field. |
-| [capture-success.json](capture-success.json) | POST response | STK push initiated: `status: success`. |
+| [capture-success.json](capture-success.json) | POST response | STK push initiated: `status: waiting`. |
 | [capture-redirect.json](capture-redirect.json) | POST response | Card redirect from `/payments/process/{ref}/`. |
 | [capture-error.json](capture-error.json) | POST response | Validation error when required `input_fields` missing. |
 

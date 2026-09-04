@@ -182,16 +182,45 @@ Key fixtures: [subscriptions-list.json](fixtures/subscriptions-list.json), [subs
 | Invoice detail | items, totals, `external_invoice_reference` | [public-invoice-with-methods.json](fixtures/public-invoice-with-methods.json) |
 | Invoice blocked | `public_pay_blocked: true`, empty methods | [public-invoice-blocked.json](fixtures/public-invoice-blocked.json) |
 | Pay init (201) | `payment_reference`, `process_url`, `amount`, `currency` | [public-pay-init.json](fixtures/public-pay-init.json) |
-| Capture waiting | `status: success`, provider STK initiated | [capture-success.json](fixtures/capture-success.json) |
+| Capture waiting | `status: waiting`, provider STK initiated | [capture-success.json](fixtures/capture-success.json) |
 | Capture redirect | `status: redirect`, `redirect_url` | [capture-redirect.json](fixtures/capture-redirect.json) |
 | Capture error | `status: error`, `detail` | [capture-error.json](fixtures/capture-error.json) |
 | Webhook paid / pending / failed | `invoice_id`, `status`, `event_id` | [webhook-payment-paid.json](fixtures/webhook-payment-paid.json), [pending](fixtures/webhook-payment-pending.json), [failed](fixtures/webhook-payment-failed.json) |
 
+### Standardized response envelope
+
+All payment capture, wallet deposit, and webhook responses use the same shape:
+
+```json
+{
+  "status": "<semantic>",
+  "detail": "<human-readable>",
+  "meta": { ... }
+}
+```
+
+| `status` | Meaning | Client action |
+|----------|---------|---------------|
+| `"success"` | Synchronous confirm (LIPA Pay, emulator) | Done — poll invoice or balance |
+| `"waiting"` | Async accepted (STK push, provider callback pending) | Wait for webhook |
+| `"redirect"` | Must open `redirect_url` in browser | Open URL |
+| `"error"` | Validation or provider failure | Show `detail` |
+
+Error responses include `code` (HTTP status) and omit `meta`:
+
+```json
+{ "status": "error", "code": 400, "detail": "Missing billing_phone" }
+```
+
+Webhook acknowledgement responses use `{ "status": "success"|"error", "detail": "..." }`.
+
+**Do not confuse** `status` (semantic API outcome) with raw django-payments status in webhook `data.object.status` (`confirmed`, `error`, etc.). Map webhook statuses via [status-map.json](status-map.json).
+
 ### Response statuses
 
-- **Redirect:** `status === 'redirect'` + `redirect_url`  
-- **Success:** `paid`, `success`, `settled`, `completed`, `confirmed`, `succeeded`  
-- **Pending:** `pending`, `processing`, `waiting`, `preauth`
+- **Redirect:** `status === 'redirect'` + `redirect_url`
+- **Success:** `status === 'success'` (sync confirm) or webhook `paid`, `confirmed`, `settled`, `completed`, `succeeded`
+- **Pending:** `status === 'waiting'` (async) or webhook `pending`, `processing`, `preauth`
 
 Canonical status lists: [status-map.json](status-map.json)
 
