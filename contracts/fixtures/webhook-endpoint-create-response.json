@@ -1,0 +1,11 @@
+{
+  "id": 7,
+  "uuid": "8f14e45f-ceea-85c0-cba5-84cd283a2de4",
+  "url": "https://your-app.example/webhooks/fikashop",
+  "enabled": true,
+  "is_default": true,
+  "subscribed_events": [],
+  "description": "",
+  "created_at": "2026-06-14T12:00:00Z",
+  "updated_at": "2026-06-14T12:00:00Z"
+}

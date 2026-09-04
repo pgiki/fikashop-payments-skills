@@ -1,14 +1,14 @@
-# Fikashop payment gateway — reference
+# Integrating with fikashop — reference
 
-One-page contract for integrating fikashop-api as a **payment-gateway proxy**.
+One-page contract for integrating fikashop payments, subscriptions, and webhooks into your app.
 
-**Model:** the client starts checkout; the host server gets webhooks for final status (especially after redirect payments).
+**Model:** your client starts checkout; your server receives webhooks for final payment status (especially after redirect payments).
 
 ```mermaid
 flowchart LR
-  Client[ClientApp] -->|Bearer + X-Partner-Id| FS[fikashop-api]
-  Client -->|profile| Host[HostAPI]
-  FS -->|POST webhook| Host
+  Client[Your Client] -->|Bearer + X-Partner-Id| API[fikashop API]
+  Client -->|profile| Server[Your Server]
+  API -->|POST webhook| Server
 ```
 
 Fixtures: [fixtures/](fixtures/) — see [fixtures/README.md](fixtures/README.md) for the full index.
@@ -30,11 +30,11 @@ Subscription routes remain **user-scoped** (`IsAuthenticated`). The admin token 
 
 Client checkout examples ([subscribe-and-topup.ts](../docs/examples/subscribe-and-topup.ts), [checkout-invoice.ts](../docs/examples/checkout-invoice.ts)) are **user-token only**.
 
-### OIDC (shared with fikashop)
+### OIDC
 
-fikashop-api authenticates via the **FikaChu IdP** at **`https://oidc.fikachu.com`**. It validates `Authorization: Bearer` tokens (OAuth2 introspection).
+The fikashop API authenticates via the **FikaChu IdP** at **`https://oidc.fikachu.com`**. It validates `Authorization: Bearer` tokens (OAuth2 introspection).
 
-If your app already signs users in through **oidc.fikachu.com**, reuse the **same access token** on fikashop-api — no separate fikashop login.
+If your app already signs users in through `oidc.fikachu.com`, reuse the **same access token** — no separate login needed.
 
 | Item | Value |
 |------|-------|
@@ -69,9 +69,9 @@ client.configurePartner('https://api.fikashop.app', selectedPartner.code);
 
 Fixture: [fixtures/partners-list.json](fixtures/partners-list.json)
 
-**Option B — Host app profile (mobility / embedded wallet)**
+**Option B — Host app profile**
 
-Some host APIs expose `X-Partner-Id` and `billing_partner_base_url` on the user profile (fikachu-driver example). After profile load:
+If your host API exposes `X-Partner-Id` and `billing_partner_base_url` on the user profile, use those values:
 
 ```ts
 client.configurePartner(profile.billing_partner_base_url, xPartnerId);
@@ -177,7 +177,7 @@ Key fixtures: [subscriptions-list.json](fixtures/subscriptions-list.json), [subs
 | Step | Key fields | Fixture |
 |------|------------|---------|
 | Balance + methods | `wallet_id`, `payment_methods[]`, synthetic `wallet.meta` | [balance-with-methods.json](fixtures/balance-with-methods.json) |
-| Top-up confirmed | `status: confirmed` (sync providers / emulator) | [wallet-deposit-confirmed.json](fixtures/wallet-deposit-confirmed.json) |
+| Top-up confirmed | `status: success` (sync providers / emulator) | [wallet-deposit-confirmed.json](fixtures/wallet-deposit-confirmed.json) |
 | Top-up redirect | `status: redirect`, `redirect_url`, `meta.intent` | [wallet-deposit-redirect.json](fixtures/wallet-deposit-redirect.json) |
 | Invoice detail | items, totals, `external_invoice_reference` | [public-invoice-with-methods.json](fixtures/public-invoice-with-methods.json) |
 | Invoice blocked | `public_pay_blocked: true`, empty methods | [public-invoice-blocked.json](fixtures/public-invoice-blocked.json) |
@@ -269,7 +269,7 @@ Canonical status lists: [status-map.json](status-map.json)
 |--------|------|-------|
 | GET | `/invoices/api/public/{uuid}/payment-methods/` | Methods only (mobile apps) |
 | GET | `/subscriptions/api/subscriptions/payment-methods/` | Deposit methods with `?exclude_codes=` |
-| GET | `/shop/api/checkout/payment-methods/available/` | Storefront checkout methods (see §7) |
+| GET | `/shop/api/checkout/payment-methods/available/` | Storefront checkout methods |
 
 ---
 
@@ -277,9 +277,42 @@ Canonical status lists: [status-map.json](status-map.json)
 
 Mobile clients **never** receive webhooks.
 
-### 5a. Unified fikashop-api events (preferred)
+### Register an endpoint
 
-Register an endpoint via **`POST /shop/api/admin/webhooks/endpoints/`** (partner-scoped with `X-Partner-Id`). fikashop-api delivers Stripe-style envelopes:
+Partner-scoped via `X-Partner-Id`, using the **server admin token**:
+
+```http
+POST /shop/api/admin/webhooks/endpoints/
+Authorization: Bearer {admin_token}
+X-Partner-Id: {partner_code}
+Content-Type: application/json
+
+{
+  "url": "https://your-app.example/webhooks/fikashop",
+  "secret": "whsec_your_shared_secret",
+  "enabled": true,
+  "is_default": true,
+  "subscribed_events": []
+}
+```
+
+| Field | Type | Notes |
+|-------|------|-------|
+| `url` | string (required) | Your HTTPS receiver endpoint |
+| `secret` | string (write-only) | Signs `Fikashop-Signature`; never returned in responses |
+| `enabled` | boolean | Default `true` |
+| `is_default` | boolean | Default `false`; `true` = default receiver for the partner |
+| `subscribed_events` | array of strings | Empty `[]` = all event types; otherwise allowed types below |
+
+Returns `201` with `{ id, uuid, url, enabled, is_default, subscribed_events, description, created_at, updated_at }` (no `secret`).
+
+List/update/delete: `GET/PATCH/DELETE /shop/api/admin/webhooks/endpoints/{id}/`. Delivery log and replay: `GET /shop/api/admin/webhooks/events/`, `POST /shop/api/admin/webhooks/events/{event_id}/replay/`.
+
+Examples: [server-webhook-setup.ts](../docs/examples/server-webhook-setup.ts) (TS) · [server-webhook-setup.py](../docs/examples/server-webhook-setup.py) (Python)
+
+### Delivered envelope
+
+Fikashop delivers Stripe-style envelopes:
 
 ```json
 {
@@ -324,20 +357,11 @@ Fixture: [fixtures/webhook-event-envelope.json](fixtures/webhook-event-envelope.
 
 Correlate invoice pay via `data.object.external_invoice_reference` or `invoice_uuid`. Wallet top-ups use `intent: wallet-deposit`. Subscriptions expose `client_reference` and `recovery` hints on API responses.
 
-**Handler libraries:** TS — `processUnifiedWebhook`, `createWebhookRouter`; Python — `process_unified_webhook`, `create_webhook_router`. Examples: [express_webhook.ts](../docs/examples/express_webhook.ts), [fastapi_webhook.py](../docs/examples/fastapi_webhook.py).
+**Handler libraries:** TS — `processUnifiedWebhook`, `createWebhookRouter`; Python — `process_unified_webhook`, `create_webhook_router`. Examples: [express_webhook.ts](../docs/examples/express_webhook.ts), [fastapi_webhook.py](../docs/examples/fastapi_webhook.py), [django_reference.md](../docs/examples/django_reference.md).
 
-Full reference: [fikashop-api docs/README-webhooks.md](../../fikashop-api/docs/README-webhooks.md)
+### Inbound provider callbacks
 
-### 5b. Inbound PSP webhooks
-
-Provider callbacks hit **`/payments/webhook/{variant}/`** on fikashop-api. Integrators do not implement these; subscribe to unified outbound events instead.
-
-### Setup
-
-1. Register a partner webhook endpoint via **`POST /shop/api/admin/webhooks/endpoints/`**
-2. Expose your receiver URL (HTTPS) and set the same secret on the endpoint
-3. Correlate via `data.object.external_invoice_reference` / `invoice_uuid`
-4. Restrict the route to server/network only
+Provider callbacks (e.g. M-Pesa, ClickPesa) hit `/payments/webhook/{variant}/` on fikashop's server. You do not implement these — subscribe to unified outbound events instead.
 
 ### Verify
 
@@ -348,7 +372,7 @@ Fixture: [fixtures/webhook-event-envelope.json](fixtures/webhook-event-envelope.
 
 ### Payload
 
-Stripe-style envelope (`id`, `type`, `data.object`) — see §5a.
+Stripe-style envelope (`id`, `type`, `data.object`) — see Delivered envelope above.
 
 ### Handler steps
 
@@ -372,17 +396,5 @@ Use the signed envelope fixture and `verify_unified_fikashop_signature` / `verif
 - Missing partner config before API calls  
 - Relying only on client refresh after redirect — use webhooks for final state  
 - Prefixing `/payments/process/` with `/shop/api/` (wrong — `/payments/` is root-mounted)  
-- Subscribing before wallet has sufficient balance — top up first (Checkout A) or handle inactive subscription retry
-
-## 8. Shop checkout (appendix)
-
-For Oscar storefront checkout (not wallet top-up or public invoice pay):
-
-- Live methods: `GET /shop/api/checkout/payment-methods/available/` (not `…/payment-methods/` — that route is schema introspection)
-- Checkout payload uses `online-payments` method with `variant` + `input_fields`
-
-See [fikashop-api storefront integration doc](../../fikashop-api/docs/storefront-integration.md).
-
-## Out of scope
-
-Trip invoicing, `settlement_rules`, wallet withdraw (`wallet-debit`).
+- Subscribing before wallet has sufficient balance — top up first (Checkout A) or handle inactive subscription retry  
+- Confusing `status: "success"` (sync confirm) with `status: "waiting"` (async — wait for webhook) with raw webhook `confirmed` status

@@ -53,7 +53,7 @@ When deposit or invoice pay returns `status: redirect`:
 
 ## Webhook recovery (recommended)
 
-Register endpoints with the server admin token — see [docs/examples/server-webhook-setup.ts](../docs/examples/server-webhook-setup.ts).
+Register endpoints with the server admin token — see [server-webhook-setup.ts](../docs/examples/server-webhook-setup.ts) (TS) or [server-webhook-setup.py](../docs/examples/server-webhook-setup.py) (Python). Send your receiver URL and a shared secret; empty `subscribed_events` receives all event types.
 
 **Subscription catalog admin** (plans, costs, features) uses the same admin token with `X-Partner-Id` — see [ADMIN-SUBSCRIPTIONS.md](ADMIN-SUBSCRIPTIONS.md) and [docs/examples/admin-subscription-catalog.ts](../docs/examples/admin-subscription-catalog.ts). Keep catalog management on your backend; customers still use user tokens for `GET …/plans/` and subscribe.
 

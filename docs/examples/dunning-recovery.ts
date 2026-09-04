@@ -1,8 +1,14 @@
 /**
- * Dunning recovery — subscribe returns inactive with unpaid_invoices[].
- * Path A: wallet top-up + poll/webhook. Path B: pay dunning invoice via Checkout B.
+ * Dunning recovery — when a subscribe returns inactive with unpaid_invoices[].
  *
- * Uses end-user OIDC token only (never FIKASHOP_ADMIN_ACCESS_TOKEN).
+ * Two recovery paths:
+ *   Path A: top up the wallet → system retries billing automatically
+ *   Path B: pay the dunning invoice directly via Checkout B
+ *
+ * Response status handling:
+ *   "redirect" → open redirect_url in browser
+ *   "waiting"  → STK push sent; wait for webhook confirmation
+ *   "success"  → payment confirmed synchronously; poll for subscription activation
  */
 import {
   capturePayment,
@@ -21,7 +27,12 @@ import {
   type UserSubscription,
 } from '@fikashop/payment-gateway-client';
 
-type RecoveryPath = 'already_active' | 'wallet_topup' | 'pay_dunning_invoice' | 'redirect';
+type RecoveryPath =
+  | 'already_active'
+  | 'wallet_topup'
+  | 'waiting'
+  | 'pay_dunning_invoice'
+  | 'redirect';
 
 async function recoverAfterSubscribe(
   accessToken: string,
@@ -48,6 +59,7 @@ async function recoverAfterSubscribe(
   });
   client.configurePartner(baseUrl, partnerCode);
 
+  // 1. Try subscribing
   const subResp = await subscribeToPlan(client, planCostSlug, {
     idempotencyKey: opts?.idempotencyKey,
   });
@@ -62,6 +74,7 @@ async function recoverAfterSubscribe(
   const dunning = subResp.data.unpaid_invoices?.[0];
   const subscriptionId = opts?.subscriptionId ?? subResp.data.id;
 
+  // 2. Choose recovery path
   if (opts?.preferInvoicePay && dunning?.uuid) {
     return payDunningInvoice(client, dunning, subscriptionId);
   }
@@ -75,6 +88,7 @@ async function recoverAfterSubscribe(
   );
 }
 
+/** Path A: top up wallet, then poll for subscription activation. */
 async function topUpAndPoll(
   client: ReturnType<typeof createFikashopClient>,
   subscriptionId: string,
@@ -106,7 +120,12 @@ async function topUpAndPoll(
     return { path: 'redirect' as const, redirectUrl: depositResp.data.redirect_url };
   }
 
-  // Path A: Celery retries billing ~1 min; poll or wait for wallet.deposit_succeeded webhook
+  if (depositResp.data?.status === 'waiting') {
+    // Async: STK push sent — wait for wallet.deposit_succeeded webhook, then system retries
+    return { path: 'waiting' as const };
+  }
+
+  // Synchronous confirm — poll until subscription activates (system retries ~1 min)
   const active = await pollSubscriptionActive(client, {
     subscriptionId,
     maxAttempts: 15,
@@ -116,6 +135,7 @@ async function topUpAndPoll(
   return { path: 'wallet_topup' as const, subscription: active ?? undefined };
 }
 
+/** Path B: pay the dunning invoice directly via Checkout B. */
 async function payDunningInvoice(
   client: ReturnType<typeof createFikashopClient>,
   dunning: UnpaidInvoiceSummary,
@@ -152,6 +172,12 @@ async function payDunningInvoice(
     };
   }
 
+  if (captureResp.data?.status === 'waiting') {
+    // Async: wait for invoice.payment_succeeded webhook, then subscription restores
+    return { path: 'waiting' as const, dunningInvoice: dunning };
+  }
+
+  // Synchronous confirm — poll for subscription activation
   const active = subscriptionId
     ? await pollSubscriptionActive(client, { subscriptionId, maxAttempts: 12, intervalMs: 5000 })
     : null;

@@ -1,8 +1,16 @@
 /**
- * Subscriptions + wallet top-up — typical partner app flow.
- * **User OIDC token only** — never FIKASHOP_ADMIN_ACCESS_TOKEN in client code.
- * Subscribe charges the partner-scoped wallet; top up when balance is insufficient.
- * Handles inactive subscribe with unpaid_invoices[] (dunning).
+ * Subscribe to a plan and top up the wallet when balance is insufficient.
+ *
+ * This example shows a third-party app subscribing a user to a plan. If the
+ * wallet has insufficient funds, it tops up first then retries the subscription.
+ *
+ * You need: a user OIDC access token, a partner code, and a plan cost slug.
+ * The wallet is scoped to the partner via X-Partner-Id.
+ *
+ * Response status handling for wallet top-up:
+ *   "redirect" → open redirect_url in browser
+ *   "waiting"  → STK push sent; wait for webhook, then retry subscribe
+ *   "success"  → wallet credited; retry subscribe immediately
  */
 import {
   createFikashopClient,
@@ -30,12 +38,13 @@ async function subscribeWithTopUp(
   });
   client.configurePartner(process.env.FIKASHOP_API_URL ?? 'https://api.fikashop.app', partnerCode);
 
-  // Billing scope: configurePartner / X-Partner-Id. Entitlements: optional subscribedPartner.
+  // 1. Try subscribing — wallet is charged immediately if funded
   const subResp = await subscribeToPlan(client, planCostSlug, { subscribedPartner: partnerCode });
   if (subResp.ok && subResp.data?.active) {
     return { step: 'subscribed' as const, subscription: subResp.data };
   }
 
+  // 2. If inactive with unpaid invoices, the wallet was underfunded
   if (subResp.ok && subResp.data && !subResp.data.active) {
     const dunningUuid = subResp.data.unpaid_invoices?.[0]?.uuid;
     if (dunningUuid) {
@@ -48,6 +57,7 @@ async function subscribeWithTopUp(
     }
   }
 
+  // 3. Top up wallet
   const { methods } = await getDepositPaymentMethods(client);
   const method = methods.find((m) => m.code === paymentVariant) ?? methods[0];
   if (!method) {
@@ -73,10 +83,22 @@ async function subscribeWithTopUp(
   if (!depositResp.ok) {
     throw new Error(depositResp.problem ?? 'Wallet deposit failed');
   }
+
+  // 4. Handle deposit response status
   if (isRedirectStatus(depositResp.data?.status) && depositResp.data?.redirect_url) {
+    // Redirect: open URL in browser, then retry subscribe after payment
     return { step: 'redirect' as const, url: depositResp.data.redirect_url };
   }
 
+  if (depositResp.data?.status === 'waiting') {
+    // Async: STK push sent — wait for wallet.deposit_succeeded webhook, then retry subscribe
+    return {
+      step: 'waiting' as const,
+      detail: depositResp.data?.detail,
+    };
+  }
+
+  // 5. Synchronous confirm — wallet credited, retry subscribe immediately
   const retryResp = await subscribeToPlan(client, planCostSlug, { subscribedPartner: partnerCode });
   if (!retryResp.ok) {
     throw new Error(retryResp.problem ?? 'Subscribe failed after top-up');

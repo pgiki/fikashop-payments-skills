@@ -104,6 +104,9 @@ Staff token + `X-Partner-Id`. See [ADMIN-SUBSCRIPTIONS.md](../ADMIN-SUBSCRIPTION
 
 | File | Direction | Notes |
 |------|-----------|-------|
+| [webhook-endpoint-create-request.json](webhook-endpoint-create-request.json) | POST body | Register webhook endpoint (`subscribed_events: []` = all). |
+| [webhook-endpoint-create-request-subset.json](webhook-endpoint-create-request-subset.json) | POST body | Register with event subset; `secret` write-only. |
+| [webhook-endpoint-create-response.json](webhook-endpoint-create-response.json) | POST response (201) | Created endpoint (no `secret` in response). |
 | [webhook-payment-paid.json](webhook-payment-paid.json) | Inbound POST | Legacy flat payload; correlate via `invoice_id`. |
 | [webhook-payment-pending.json](webhook-payment-pending.json) | Inbound POST | Async payment still processing. |
 | [webhook-payment-failed.json](webhook-payment-failed.json) | Inbound POST | Failed / declined payment. |

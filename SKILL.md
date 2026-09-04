@@ -1,11 +1,19 @@
 ---
 name: fikashop-payments-skills
-description: Integrate fikashop-api for payments (wallet top-up, invoice pay), subscriptions (plans, subscribe, features, dunning recovery, change/cancel), and host webhooks. Use for fikashop checkout, input_fields, X-Partner-Id, subscriptions, feature billing, or webhook setup.
+description: Integrate fikashop for payments (wallet top-up, invoice pay), subscriptions (plans, subscribe, features, dunning recovery, change/cancel), and webhook handling. Use for checkout, input_fields, X-Partner-Id, subscriptions, feature billing, or webhook setup.
 ---
 
-# Fikashop Payments Skills
+# Fikashop Payments Integration
 
-**Read first:** [contracts/SUBSCRIPTIONS.md](contracts/SUBSCRIPTIONS.md) (subscriptions) · [contracts/REFERENCE.md](contracts/REFERENCE.md) (payments + webhooks) · Fixtures: [contracts/fixtures](contracts/fixtures) ([index](contracts/fixtures/README.md))
+**Read first:** [REFERENCE.md](contracts/REFERENCE.md) (endpoints, response formats, webhooks) · [SUBSCRIPTIONS.md](contracts/SUBSCRIPTIONS.md) (subscriptions) · [fixtures/](contracts/fixtures/) ([index](contracts/fixtures/README.md))
+
+## Overview
+
+Fikashop provides payment processing, wallet management, and subscription billing. You integrate by calling our REST API from your app (client) and your server.
+
+**You need two things to start:**
+1. An OIDC access token from `https://oidc.fikachu.com` (end-user token for client calls)
+2. A partner code — from `GET /shop/api/admin/partners/` or your host profile
 
 ## Which flow?
 
@@ -13,56 +21,40 @@ description: Integrate fikashop-api for payments (wallet top-up, invoice pay), s
 | ---- | ---- | ------------- |
 | Top up partner wallet | **Checkout A** | `GET …/balance/` → `POST …/wallet-deposit/` |
 | Pay a shared invoice | **Checkout B** | `GET …/public/{uuid}/` → `POST …/pay/` → `POST /payments/process/{ref}/` |
-| Subscribe / manage plans | **Subscriptions C** | `GET …/plans/`, `POST …/`, features, `change-plan/`, `cancel/` |
+| Subscribe / manage plans | **Subscriptions** | `GET …/plans/`, `POST …/`, features, `change-plan/`, `cancel/` |
 | Confirm async payment | **Webhooks** | Register `POST /shop/api/admin/webhooks/endpoints/`; verify `Fikashop-Signature` |
-| Manage plan catalog (server) | **Admin catalog** | `POST /shop/api/admin/subscription-plans/` — [ADMIN-SUBSCRIPTIONS.md](contracts/ADMIN-SUBSCRIPTIONS.md) |
 
-All client flows need **`Authorization: Bearer`** (end-user OIDC from `https://oidc.fikachu.com`) and **`X-Partner-Id`** before calling wallet, invoice, or subscription APIs.
+### Tokens
 
-### Server vs client tokens
+| Context | Token | Use |
+|---------|-------|-----|
+| **Client** (React, RN, web) | User OIDC `access_token` from `https://oidc.fikachu.com` | Wallet, invoice pay, subscribe, feature bill |
+| **Server** (backend jobs) | `FIKASHOP_ADMIN_ACCESS_TOKEN` from dashboard **Settings → API keys** | Register webhook endpoints, admin partner APIs |
 
-| Context | Token | Example |
-|---------|-------|---------|
-| **Server** | `FIKASHOP_ADMIN_ACCESS_TOKEN` (dashboard **Settings → API keys**) | Webhooks — [server-webhook-setup.ts](docs/examples/server-webhook-setup.ts); catalog — [admin-subscription-catalog.ts](docs/examples/admin-subscription-catalog.ts) |
-| **Client** (React/RN) | User OIDC `access_token` only | [subscribe-and-topup.ts](docs/examples/subscribe-and-topup.ts), [checkout-invoice.ts](docs/examples/checkout-invoice.ts) |
+**Never** ship the admin token in client bundles (`EXPO_PUBLIC_*`, mobile storage).
 
-Never ship the admin token in client bundles (`EXPO_PUBLIC_*`, mobile storage). See [contracts/PRODUCTION.md](contracts/PRODUCTION.md).
+### Partner (`X-Partner-Id`)
 
-## Roles
+```http
+GET /shop/api/admin/partners/
+Authorization: Bearer {access_token}
+```
 
-| Who          | Does what                                                           |
-| ------------ | ------------------------------------------------------------------- |
-| Host API     | OIDC, `X-Partner-Id` / `billing_partner_base_url`, webhook endpoint |
-| Client       | `Bearer` + `X-Partner-Id` → fikashop checkout & subscription APIs   |
-| fikashop-api | Methods, wallets, capture, subscriptions, outbound webhooks         |
+Returns businesses for the signed-in user. Use each row's **`code`** or **`id`** as `X-Partner-Id`. Then:
 
-Client initiates; host webhook confirms (especially after `redirect` payments).
+```ts
+client.configurePartner('https://api.fikashop.app', partnerCode);
+```
+
+Do not call wallet, invoice, or subscription APIs until `X-Partner-Id` is set.
 
 ## Client essentials
 
-**Auth:** fikashop uses **`https://oidc.fikachu.com`**. Apps already on that IdP reuse the **same end-user access token** on fikashop-api.
-
-| Context | Token |
-|---------|-------|
-| Client (RN/web checkout) | User OIDC `access_token` |
-| Server (webhooks admin) | `FIKASHOP_ADMIN_ACCESS_TOKEN` from dashboard API keys — env only |
-
-**Pitfall:** never use the admin token in React Native / Expo client code.
-
-**Partner (`X-Partner-Id`):**
-
-- `GET /shop/api/admin/partners/` — list businesses for the signed-in user; use `code` or `id` from `results[]`
-- Or host profile: `X-Partner-Id` + `billing_partner_base_url`
-
-Then `client.configurePartner(baseUrl, partnerId)` before wallet/invoice/subscription calls.
-
-**Methods** — from API, never hardcoded:
-
+**Methods** — always from API, never hardcoded:
 - Top-up: `GET …/subscriptions/balance/` → exclude `wallet` method
-- Invoice: `GET …/public/{uuid}/` → honor `public_pay_blocked`
+- Invoice: `GET …/public/{uuid}/` → respect `public_pay_blocked`
 
 **input_fields** — from selected method only:
-
 - Submit keyed by `field.code` (not `label`/`name`)
 - `text` → string; `checkbox`/`boolean` → boolean
 - Reset form when method changes
@@ -71,7 +63,6 @@ Then `client.configurePartner(baseUrl, partnerId)` before wallet/invoice/subscri
 **Checkout A (top-up):** balance → `POST …/wallet-deposit/` with `variant` + `input_fields`
 
 **Checkout B (invoice):** public GET → `POST …/pay/` → `payment_reference` → `POST …/payments/process/{ref}/` with `action: capture`
-
 - `/payments/` is **root-mounted** — do not prefix with `/shop/api/`
 - Pay response includes `process_url` as well as `payment_reference`
 
@@ -102,9 +93,9 @@ Error responses add a `code` field (HTTP status) and omit `meta`:
 
 Do not confuse `status` (semantic outcome) with the raw django-payments status in webhooks (`confirmed`, `error`, etc.). Canonical status mapping: [status-map.json](contracts/status-map.json)
 
-## Subscriptions C
+## Subscriptions
 
-Full detail: **[contracts/SUBSCRIPTIONS.md](contracts/SUBSCRIPTIONS.md)** — endpoints, fixtures, recovery, feature API, errors.
+Full detail: [SUBSCRIPTIONS.md](contracts/SUBSCRIPTIONS.md) — endpoints, fixtures, recovery, feature API, errors.
 
 Base path: `/subscriptions/api/subscriptions/`.
 
@@ -116,32 +107,24 @@ Base path: `/subscriptions/api/subscriptions/`.
 4. `GET …/usage-by-plan/{plan_id}/` or `…/usage-by-id/{subscription_id}/` — subscription + `feature_usage`
 5. `GET …/plan-options/?for_subscription={uuid}` — same-plan billing options for change-plan UI
 
-Fixtures: [subscriptions-list.json](contracts/fixtures/subscriptions-list.json), [subscription-plans.json](contracts/fixtures/subscription-plans.json)
-
 ### Subscribe
 
-`POST …/` with `{ "plan_cost_slug": "pro-monthly" }` — immediate wallet charge via `PlanManager`.
+`POST …/` with `{ "plan_cost_slug": "pro-monthly" }` — immediate wallet charge.
 
-**Billing vs subscribed partner:** wallet debits use `X-Partner-Id` / `?partner=` (stored in `meta.partner_id`). Shop-specific entitlements use optional body `subscribed_partner` (returned as `subscribed_partner_id` / `subscribed_partner_code`). See [SUBSCRIPTIONS.md § Subscribed vs billing](contracts/SUBSCRIPTIONS.md#subscribed-partner-vs-billing-partner).
+**Billing vs subscribed partner:** wallet debits use `X-Partner-Id` / `?partner=` (stored in `meta.partner_id`). Shop-specific entitlements use optional body `subscribed_partner` (returned as `subscribed_partner_id` / `subscribed_partner_code`).
 
 | Result | Meaning | Next step |
 |--------|---------|-----------|
 | `201`, `active: true` | Funded | Gate features |
 | `201`, `active: false`, `unpaid_invoices[]` | Underfunded / dunning | Path A (top-up) or Path B (pay invoice uuid) — see SUBSCRIPTIONS.md recovery |
 
-Fixtures: [subscribe-response.json](contracts/fixtures/subscribe-response.json), [subscribe-response-inactive-dunning.json](contracts/fixtures/subscribe-response-inactive-dunning.json)
-
 ### Feature gate → bill
 
 1. `GET …/features/{code}/access/` — read `allowed` before each gated action
 2. If allowed, perform action, then `POST …/features/{code}/bill/` with `{ "quantity": 1 }`
 3. Pass `?subscription_id=` when user has multiple active subscriptions; `?subscribed_partner=` when entitlements are shop-specific; `?point=` to require a covering plan fence
-4. Handle `402` (insufficient wallet → Checkout A), `429` (quota exceeded, no overage)
+4. Handle `402` (insufficient wallet → top up), `429` (quota exceeded, no overage)
 5. Pass **`Idempotency-Key`** on bill for safe retries (24h cache)
-
-Fixtures: [feature-access-allowed.json](contracts/fixtures/feature-access-allowed.json), [feature-bill-response.json](contracts/fixtures/feature-bill-response.json)
-
-Optional: `checkFeatureAccess(client, code, { subscriptionId, subscribedPartner, point })` · `billFeatureUsage(client, code, { idempotencyKey, subscriptionId, subscribedPartner, point, quantity })`
 
 ### Change / cancel / history
 
@@ -151,23 +134,67 @@ Optional: `checkFeatureAccess(client, code, { subscriptionId, subscribedPartner,
 
 ### Recovery (underfunded / failed renewal)
 
-- **Path A:** `wallet-deposit` → wait for `wallet.deposit_succeeded` or poll balance → Celery retry ~1 min
+- **Path A:** `wallet-deposit` → wait for `wallet.deposit_succeeded` or poll balance → system retries billing ~1 min
 - **Path B:** pay `unpaid_invoices[].uuid` via Checkout B → `invoice.payment_succeeded` restores subscription **without second wallet debit**
 - Watch `billing_retry_exhausted: true` — auto-billing paused until payment succeeds
 
 If `status` is `'redirect'` on deposit, open `redirect_url`. If `'waiting'`, wait for webhook (STK push or async PSP). If `'success'`, payment confirmed synchronously.
 
-## Webhook essentials (server)
+## Webhooks (server)
 
-Register endpoints via **`POST /shop/api/admin/webhooks/endpoints/`** — see [REFERENCE.md §6](contracts/REFERENCE.md#6-webhooks-server).
+Mobile clients **never** receive webhooks. Your server registers an endpoint, then fikashop delivers event envelopes to it as `POST` requests.
+
+### 1. Register your endpoint
+
+Requires the **server admin token** (`FIKASHOP_ADMIN_ACCESS_TOKEN`). Send your receiver URL and a secret — fikashop signs every delivery with that secret:
+
+```http
+POST /shop/api/admin/webhooks/endpoints/
+Authorization: Bearer {admin_token}
+X-Partner-Id: {partner_code}
+Content-Type: application/json
+
+{
+  "url": "https://your-app.example/webhooks/fikashop",
+  "secret": "whsec_your_shared_secret",
+  "enabled": true,
+  "is_default": true,
+  "subscribed_events": []
+}
+```
+
+- `subscribed_events: []` (empty) = receive **all** event types. To limit, list event names (e.g. `["payment.succeeded", "subscription.updated"]`).
+- `secret` is **write-only** — never returned in responses; keep it server-side.
+- Returns `201` with the created endpoint (`id`, `uuid`, `url`, `enabled`, `is_default`, `subscribed_events`, `created_at`).
+
+Ready-to-run: [server-webhook-setup.ts](docs/examples/server-webhook-setup.ts) (TS) · [server-webhook-setup.py](docs/examples/server-webhook-setup.py) (Python)
+
+### 2. Receive and verify events
 
 - **`Fikashop-Signature`** = HMAC-SHA256 over `{timestamp}.{raw_body}`
+- Verify **raw request bytes** — do not re-serialize JSON
 - Dedupe on envelope **`id`** (stable event id)
-- Route with **`createWebhookRouter`** / **`processUnifiedWebhook`** (TS) or **`create_webhook_router`** / **`process_unified_webhook`** (Python)
-- Subscription types: `subscription.created`, `subscription.updated`, `subscription.cancelled`, `subscription.past_due`
-- Payment recovery: `wallet.deposit_succeeded`, `invoice.payment_succeeded`, `payment.succeeded`, `payment.failed`, `payment.refunded`
+- Route with `createWebhookRouter` / `processUnifiedWebhook` (TS) or `create_webhook_router` / `process_unified_webhook` (Python)
 
-Examples: [express_webhook.ts](docs/examples/express_webhook.ts) · [webhook-host-handler.ts](docs/examples/webhook-host-handler.ts) · [server-webhook-setup.ts](docs/examples/server-webhook-setup.ts) · [fastapi_webhook.py](docs/examples/fastapi_webhook.py)
+Acknowledge promptly with `200`; fikashop retries failed deliveries.
+
+### 3. Handle event types
+
+| Type | When |
+|------|------|
+| `payment.created` | Gateway payment session opened |
+| `payment.processing` | Payment waiting / in flight |
+| `payment.succeeded` | Gateway payment confirmed |
+| `payment.failed` / `payment.cancelled` | Payment error or cancelled |
+| `payment.refunded` | Refund posted |
+| `invoice.payment_succeeded` | Invoice paid or partially paid |
+| `wallet.deposit_succeeded` | Wallet top-up credited |
+| `subscription.created` | User subscribed via API |
+| `subscription.updated` | Activation, renewal, dunning recovery, billing state |
+| `subscription.cancelled` | Subscription cancelled |
+| `subscription.past_due` | Dunning invoice or failed renewal |
+
+Full flow (register → receive → handle): [server-webhook-setup.ts](docs/examples/server-webhook-setup.ts) (register, TS) · [server-webhook-setup.py](docs/examples/server-webhook-setup.py) (register, Python) · [express_webhook.ts](docs/examples/express_webhook.ts) (receive) · [webhook-host-handler.ts](docs/examples/webhook-host-handler.ts) (process) · [fastapi_webhook.py](docs/examples/fastapi_webhook.py) (receive, Python) · [django_reference.md](docs/examples/django_reference.md) (receive, Django)
 
 ## SDK
 
@@ -184,7 +211,7 @@ Examples: [express_webhook.ts](docs/examples/express_webhook.ts) · [webhook-hos
 | Errors | `formatWalletFailure`, `formatSubscriptionFailure`, `formatGatewayFailure`, `describeGatewayFailure` |
 | Webhooks | `verifyUnifiedFikashopSignature`, `parseUnifiedWebhookEnvelope`, `processUnifiedWebhook`, `createWebhookRouter`, `InMemoryUnifiedWebhookHandler` (TS); `process_unified_webhook`, `create_webhook_router` (Python) |
 
-Runbooks: [contracts/PRODUCTION.md](contracts/PRODUCTION.md) · Stripe mapping: [contracts/STRIPE-MIGRATION.md](contracts/STRIPE-MIGRATION.md)
+Runbooks: [PRODUCTION.md](contracts/PRODUCTION.md) · Stripe mapping: [STRIPE-MIGRATION.md](contracts/STRIPE-MIGRATION.md)
 
 Examples: [checkout-invoice.ts](docs/examples/checkout-invoice.ts) · [subscribe-and-topup.ts](docs/examples/subscribe-and-topup.ts) · [plans-by-tag.ts](docs/examples/plans-by-tag.ts) · [admin-subscription-catalog.ts](docs/examples/admin-subscription-catalog.ts) · [feature-gating-and-bill.ts](docs/examples/feature-gating-and-bill.ts) · [dunning-recovery.ts](docs/examples/dunning-recovery.ts) · [express_webhook.ts](docs/examples/express_webhook.ts)
 

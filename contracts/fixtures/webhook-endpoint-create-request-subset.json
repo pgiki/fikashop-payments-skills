@@ -1,0 +1,11 @@
+{
+  "url": "https://your-app.example/webhooks/fikashop",
+  "secret": "whsec_your_shared_secret",
+  "enabled": true,
+  "is_default": true,
+  "subscribed_events": [
+    "payment.succeeded",
+    "payment.failed",
+    "subscription.updated"
+  ]
+}

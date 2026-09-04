@@ -1,6 +1,11 @@
 /**
- * Register a partner webhook endpoint using the server admin token.
- * User-token only — never run this in React Native / Expo client bundles.
+ * Register a webhook endpoint to receive fikashop payment and subscription events.
+ *
+ * Requires the server admin token (FIKASHOP_ADMIN_ACCESS_TOKEN) — never run
+ * this from client bundles (React Native, Expo, browser).
+ *
+ * After registration, fikashop delivers Stripe-style event envelopes to your URL.
+ * See webhook-host-handler.ts for a receiver example.
  */
 import { createFikashopClient } from '@fikashop/payment-gateway-client';
 
@@ -24,6 +29,7 @@ async function registerWebhookEndpoint() {
     partnerId: partnerCode,
   });
 
+  // Register — empty subscribed_events means all event types
   const resp = await client.post('/shop/api/admin/webhooks/endpoints/', {
     url: webhookUrl,
     secret: webhookSecret,
@@ -36,6 +42,8 @@ async function registerWebhookEndpoint() {
     throw new Error(resp.problem ?? `Webhook registration failed (${resp.status})`);
   }
 
+  // Response includes id, uuid, url, enabled, is_default, subscribed_events, created_at
+  // secret is write-only and never returned
   return resp.data;
 }
 
