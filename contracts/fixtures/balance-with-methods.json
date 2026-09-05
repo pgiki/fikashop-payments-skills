@@ -33,7 +33,8 @@
             "pattern": "^\\+255[0-9]{9}$"
           }
         }
-      ]
+      ],
+      "countries": ["TZ"]
     },
     {
       "code": "tigo_pesa",
@@ -51,7 +52,8 @@
           "default_value": null,
           "schema": null
         }
-      ]
+      ],
+      "countries": ["TZ"]
     },
     {
       "code": "card",
@@ -78,7 +80,8 @@
           "default_value": false,
           "schema": null
         }
-      ]
+      ],
+      "countries": []
     }
   ]
 }

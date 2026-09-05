@@ -65,7 +65,8 @@
             "pattern": "^\\+255[0-9]{9}$"
           }
         }
-      ]
+      ],
+      "countries": ["TZ"]
     },
     {
       "code": "card",
@@ -83,7 +84,8 @@
           "default_value": false,
           "schema": null
         }
-      ]
+      ],
+      "countries": []
     }
   ]
 }

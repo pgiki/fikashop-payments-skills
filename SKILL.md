@@ -53,6 +53,7 @@ Do not call wallet, invoice, or subscription APIs until `X-Partner-Id` is set.
 **Methods** — always from API, never hardcoded:
 - Top-up: `GET …/subscriptions/balance/` → exclude `wallet` method
 - Invoice: `GET …/public/{uuid}/` → respect `public_pay_blocked`
+- Country: append `?country={ISO_CODE}` (e.g. `?country=TZ`) to only list methods available in the payer's country; each method carries `countries[]` (empty = worldwide)
 
 **input_fields** — from selected method only:
 - Submit keyed by `field.code` (not `label`/`name`)

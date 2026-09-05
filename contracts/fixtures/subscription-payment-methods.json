@@ -17,7 +17,8 @@
           "pattern": "^\\+255[0-9]{9}$"
         }
       }
-    ]
+    ],
+    "countries": ["TZ"]
   },
   {
     "code": "card",
@@ -25,7 +26,7 @@
     "method_type": "card",
     "description": "Pay by card via hosted checkout",
     "image_url": "https://cdn.fikashop.app/payment-methods/card.png",
-    "input_fields": [
+      "input_fields": [
       {
         "code": "billing_email",
         "label": "Receipt email",
@@ -35,6 +36,7 @@
         "default_value": null,
         "schema": null
       }
-    ]
+    ],
+    "countries": []
   }
 ]

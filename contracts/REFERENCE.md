@@ -90,7 +90,9 @@ Methods are **server-driven** — never hardcode lists.
 | Top-up | `/subscriptions/api/subscriptions/balance/` | Use `payment_methods`; exclude `code === 'wallet'` |
 | Pay invoice | `/invoices/api/public/{uuid}/` | Respect `public_pay_blocked` |
 
-Each method: `code`, `name`, `method_type`, optional `description`, optional `image_url`, optional `input_fields[]`.
+Each method: `code`, `name`, `method_type`, optional `description`, optional `image_url`, optional `input_fields[]`, `countries[]` (ISO 3166-1 alpha-2 codes; empty means available worldwide).
+
+**Country filtering:** pass `?country={ISO_CODE}` (e.g. `?country=TZ`) on method-listing endpoints to only receive methods available in the payer's country. Supported on: `GET …/balance/`, `GET …/payment-methods/`, `GET …/public/{uuid}/`, `GET …/public/{uuid}/payment-methods/`, `GET /shop/api/checkout/payment-methods/available/`. Send the shipping/billing address country; omit the param to receive all methods.
 
 Synthetic **`wallet`** method (when balance > 0): not a DB row — appended by the balance endpoint with `meta.balance`, `meta.wallet_id`, empty `input_fields`. Exclude `code === 'wallet'` for deposit method pickers.
 

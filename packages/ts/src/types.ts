@@ -17,6 +17,8 @@ export type PaymentMethod = {
   method_type?: string;
   description?: string;
   input_fields?: PaymentInputField[];
+  /** ISO 3166-1 alpha-2 codes; empty/absent means available worldwide */
+  countries?: string[];
 };
 
 export type SubscriptionWalletBalanceResponse = {
