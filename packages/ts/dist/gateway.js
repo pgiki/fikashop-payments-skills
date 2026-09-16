@@ -76,17 +76,25 @@ export async function listUserPartners(client, params) {
 export async function getSubscriptionBalance(client) {
     return client.get(PATHS.balance);
 }
+function userBalanceParams(identity) {
+    if ('userId' in identity)
+        return { user_id: identity.userId };
+    if ('phone' in identity)
+        return { phone: identity.phone };
+    return { email: identity.email };
+}
 /**
  * Partner-scoped wallet balance per currency for another user.
  *
  * Partner context is **required** — call `client.configurePartner(...)` first. A missing
  * partner is a `400` and an unknown ref a `404`; `403` means the caller may not read that
  * user (only self, `is_staff`/`is_superuser`, or partner staff reading a linked user).
+ *
+ * Pass exactly one identifier: `{ userId }`, `{ phone }`, or `{ email }`. Phone may be
+ * E.164 or local form (default region `TZ`); an email shared by several users is a `400`.
  */
-export async function getUserBalance(client, userId) {
-    return client.get(PATHS.userBalance, {
-        user_id: userId,
-    });
+export async function getUserBalance(client, identity) {
+    return client.get(PATHS.userBalance, userBalanceParams(identity));
 }
 export async function getDepositPaymentMethods(client) {
     const resp = await getSubscriptionBalance(client);

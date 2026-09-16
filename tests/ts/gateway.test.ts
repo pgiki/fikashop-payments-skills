@@ -4,6 +4,7 @@ import {
   checkFeatureAccess,
   billFeatureUsage,
   getSubscriptionPlans,
+  getUserBalance,
   parsePartnerList,
 } from "../../packages/ts/src/gateway";
 import type { FikashopClient } from "../../packages/ts/src/client";
@@ -142,5 +143,25 @@ describe("gateway subscription paths", () => {
 
     await billFeatureUsage(client, "sms_outbound", { subscribedPartner: 42 });
     expect(capturedParams).toEqual({ subscribed_partner: 42 });
+  });
+
+  it("getUserBalance maps each identity onto its query param", async () => {
+    const captured: unknown[] = [];
+    const client = {
+      get: async (_url: string, params?: unknown) => {
+        captured.push(params);
+        return { ok: true, data: {} };
+      },
+    } as unknown as FikashopClient;
+
+    await getUserBalance(client, { userId: 1187 });
+    await getUserBalance(client, { phone: "0712345678" });
+    await getUserBalance(client, { email: "customer@example.com" });
+
+    expect(captured).toEqual([
+      { user_id: 1187 },
+      { phone: "0712345678" },
+      { email: "customer@example.com" },
+    ]);
   });
 });

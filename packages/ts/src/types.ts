@@ -39,6 +39,15 @@ export type SubscriptionWalletBalanceResponse = {
   payment_methods: PaymentMethod[];
 };
 
+/**
+ * Exactly one identifier for the user whose balance is being read.
+ * The API rejects a request carrying none, or more than one.
+ */
+export type UserBalanceIdentity =
+  | { userId: number }
+  | { phone: string }
+  | { email: string };
+
 /** Partner-scoped wallet balance for a specific user (`GET …/user-balance/?user_id=`). */
 export type UserBalanceResponse = {
   user_id: number;

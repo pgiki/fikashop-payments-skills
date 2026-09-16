@@ -1,5 +1,5 @@
 import type { FikashopClient } from "./client.js";
-import type { FeatureAccessResponse, FeatureBillResponse, PaginatedResults, PartnerSummary, PaymentCaptureResponse, PaymentFormValues, PlanCostSummary, PublicInvoice, PublicPayInitResponse, SubscriptionListResponse, SubscriptionPlanCatalogItem, SubscriptionTransaction, SubscriptionWalletBalanceResponse, UserBalanceResponse, UserSubscription, WalletDepositResponse } from "./types.js";
+import type { FeatureAccessResponse, FeatureBillResponse, PaginatedResults, PartnerSummary, PaymentCaptureResponse, PaymentFormValues, PlanCostSummary, PublicInvoice, PublicPayInitResponse, SubscriptionListResponse, SubscriptionPlanCatalogItem, SubscriptionTransaction, SubscriptionWalletBalanceResponse, UserBalanceIdentity, UserBalanceResponse, UserSubscription, WalletDepositResponse } from "./types.js";
 import type { ApiResponse } from "apisauce";
 declare const PATHS: {
     readonly adminPartners: "/shop/api/admin/partners/";
@@ -33,8 +33,11 @@ export declare function getSubscriptionBalance(client: FikashopClient): Promise<
  * Partner context is **required** — call `client.configurePartner(...)` first. A missing
  * partner is a `400` and an unknown ref a `404`; `403` means the caller may not read that
  * user (only self, `is_staff`/`is_superuser`, or partner staff reading a linked user).
+ *
+ * Pass exactly one identifier: `{ userId }`, `{ phone }`, or `{ email }`. Phone may be
+ * E.164 or local form (default region `TZ`); an email shared by several users is a `400`.
  */
-export declare function getUserBalance(client: FikashopClient, userId: number): Promise<ApiResponse<UserBalanceResponse, UserBalanceResponse>>;
+export declare function getUserBalance(client: FikashopClient, identity: UserBalanceIdentity): Promise<ApiResponse<UserBalanceResponse, UserBalanceResponse>>;
 export declare function getDepositPaymentMethods(client: FikashopClient): Promise<{
     response: ApiResponse<SubscriptionWalletBalanceResponse, SubscriptionWalletBalanceResponse>;
     methods: readonly [];
