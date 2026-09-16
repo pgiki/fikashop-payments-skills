@@ -33,11 +33,11 @@ Bearer + X-Partner-Id
 
 ## Authentication and partner scoping
 
-| Header / query | Purpose |
-|----------------|---------|
+| Header / query                         | Purpose                                         |
+| -------------------------------------- | ----------------------------------------------- |
 | `Authorization: Bearer {access_token}` | Required — OIDC from `https://oidc.fikachu.com` |
-| `X-Partner-Id: {partner_code_or_id}` | Scopes wallet and subscription billing |
-| `?partner=` | Alternative to `X-Partner-Id` |
+| `X-Partner-Id: {partner_code_or_id}`   | Scopes wallet and subscription billing          |
+| `?partner=`                            | Alternative to `X-Partner-Id`                   |
 
 **Resolve partner:** `GET /shop/api/admin/partners/` → use `results[].code` or `id`. Fixture: [partners-list.json](fixtures/partners-list.json).
 
@@ -58,19 +58,19 @@ Persisted on subscribe; used for renewals when HTTP partner context is absent:
 }
 ```
 
-| Key | Meaning |
-|-----|---------|
-| `partner_id` | Billing partner PK; `null` = global wallet |
-| `partner_code` | Denormalized partner code |
+| Key                          | Meaning                                          |
+| ---------------------------- | ------------------------------------------------ |
+| `partner_id`                 | Billing partner PK; `null` = global wallet       |
+| `partner_code`               | Denormalized partner code                        |
 | `dunning_paid_invoice_uuids` | Invoice UUIDs already applied to restore billing |
 
 ### Subscribed partner vs billing partner
 
 Two partner scopes apply on subscribe:
 
-| Scope | Source | Stored on |
-|-------|--------|-----------|
-| **Billing** | `?partner=` / `X-Partner-Id` | `meta.partner_id` — wallet debits and renewals |
+| Scope                  | Source                                                 | Stored on                                                                                                           |
+| ---------------------- | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------- |
+| **Billing**            | `?partner=` / `X-Partner-Id`                           | `meta.partner_id` — wallet debits and renewals                                                                      |
 | **Subscribed partner** | JSON body `subscribed_partner` (int PK or string code) | Top-level `subscribed_partner_id` / `subscribed_partner_code` on the subscription — feature access and entitlements |
 
 ```json
@@ -89,36 +89,37 @@ Use the same int-or-code resolution as request partner scoping. Omit body `subsc
 
 Base path: **`/subscriptions/api/subscriptions/`**
 
-| Method | Path | Purpose | Fixture(s) |
-|--------|------|---------|------------|
-| GET | `/` | List subscriptions + wallet `balance`; `?page=`/`?size=`, `?tags=` (AND), `?point=` | [subscriptions-list.json](fixtures/subscriptions-list.json) |
-| POST | `/` | Subscribe (`plan_cost_slug`) | [subscribe-response.json](fixtures/subscribe-response.json), [subscribe-response-inactive-dunning.json](fixtures/subscribe-response-inactive-dunning.json) |
-| GET | `/plans/` | Plan catalog; `?tags=`, `?point=`, `?includes=subscribed_plan_cost_id` | [subscription-plans.json](fixtures/subscription-plans.json), [subscription-plans-filtered-by-tag.json](fixtures/subscription-plans-filtered-by-tag.json), [subscription-plans-with-subscribed-cost.json](fixtures/subscription-plans-with-subscribed-cost.json) |
-| GET | `/plans/{plan_id}/` | Single plan (same catalog rules) | [subscription-plan-detail.json](fixtures/subscription-plan-detail.json) |
-| GET | `/usage-by-plan/{plan_id}/` | Active `UserSubscription` for plan (+ `feature_usage`); optional `?point=` | [usage-by-plan-response.json](fixtures/usage-by-plan-response.json) |
-| GET | `/usage-by-id/{subscription_id}/` | Caller’s `UserSubscription` by id | [usage-by-plan-response.json](fixtures/usage-by-plan-response.json) |
-| GET | `/features/{code}/access/` | Check feature access; optional `?point=` | [feature-access-allowed.json](fixtures/feature-access-allowed.json) |
-| POST | `/features/{code}/bill/` | Bill feature usage; optional `?point=` | [feature-bill-response.json](fixtures/feature-bill-response.json) |
-| GET | `/plan-options/` | Alternate costs; optional `?point=` | [plan-options-all.json](fixtures/plan-options-all.json) |
-| POST | `/change-plan/` | Change billing option (`immediate` prorate / `next_cycle` pending) | [change-plan-response.json](fixtures/change-plan-response.json), [change-plan-next-cycle-response.json](fixtures/change-plan-next-cycle-response.json) |
-| POST | `/cancel/` | Cancel subscription | [cancel-response.json](fixtures/cancel-response.json) |
-| GET | `/balance/` | Balance + deposit methods | [balance-with-methods.json](fixtures/balance-with-methods.json) |
-| GET | `/payment-methods/` | Deposit methods only | [subscription-payment-methods.json](fixtures/subscription-payment-methods.json) |
-| GET | `/transactions/` | Wallet history | [subscription-transactions-page1.json](fixtures/subscription-transactions-page1.json) |
-| POST | `/wallet-deposit/` | Top-up wallet | [wallet-deposit-request.json](fixtures/wallet-deposit-request.json) |
-| POST | `/wallet-debit/` | Withdrawal hold (partner required) | Out of scope — see appendix |
+| Method | Path                              | Purpose                                                                             | Fixture(s)                                                                                                                                                                                                                                                      |
+| ------ | --------------------------------- | ----------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GET    | `/`                               | List subscriptions + wallet `balance`; `?page=`/`?size=`, `?tags=` (AND), `?point=` | [subscriptions-list.json](fixtures/subscriptions-list.json)                                                                                                                                                                                                     |
+| POST   | `/`                               | Subscribe (`plan_cost_slug`)                                                        | [subscribe-response.json](fixtures/subscribe-response.json), [subscribe-response-inactive-dunning.json](fixtures/subscribe-response-inactive-dunning.json)                                                                                                      |
+| GET    | `/plans/`                         | Plan catalog; `?tags=`, `?point=`, `?includes=subscribed_plan_cost_id`              | [subscription-plans.json](fixtures/subscription-plans.json), [subscription-plans-filtered-by-tag.json](fixtures/subscription-plans-filtered-by-tag.json), [subscription-plans-with-subscribed-cost.json](fixtures/subscription-plans-with-subscribed-cost.json) |
+| GET    | `/plans/{plan_id}/`               | Single plan (same catalog rules)                                                    | [subscription-plan-detail.json](fixtures/subscription-plan-detail.json)                                                                                                                                                                                         |
+| GET    | `/usage-by-plan/{plan_id}/`       | Active `UserSubscription` for plan (+ `feature_usage`); optional `?point=`          | [usage-by-plan-response.json](fixtures/usage-by-plan-response.json)                                                                                                                                                                                             |
+| GET    | `/usage-by-id/{subscription_id}/` | Caller’s `UserSubscription` by id                                                   | [usage-by-plan-response.json](fixtures/usage-by-plan-response.json)                                                                                                                                                                                             |
+| GET    | `/features/{code}/access/`        | Check feature access; optional `?point=`                                            | [feature-access-allowed.json](fixtures/feature-access-allowed.json)                                                                                                                                                                                             |
+| POST   | `/features/{code}/bill/`          | Bill feature usage; optional `?point=`                                              | [feature-bill-response.json](fixtures/feature-bill-response.json)                                                                                                                                                                                               |
+| GET    | `/plan-options/`                  | Alternate costs; optional `?point=`                                                 | [plan-options-all.json](fixtures/plan-options-all.json)                                                                                                                                                                                                         |
+| POST   | `/change-plan/`                   | Change billing option (`immediate` prorate / `next_cycle` pending)                  | [change-plan-response.json](fixtures/change-plan-response.json), [change-plan-next-cycle-response.json](fixtures/change-plan-next-cycle-response.json)                                                                                                          |
+| POST   | `/cancel/`                        | Cancel subscription                                                                 | [cancel-response.json](fixtures/cancel-response.json)                                                                                                                                                                                                           |
+| GET    | `/balance/`                       | Balance + deposit methods                                                           | [balance-with-methods.json](fixtures/balance-with-methods.json)                                                                                                                                                                                                 |
+| GET    | `/user-balance/?user_id=`         | Partner-scoped balance for another user (partner required)                          | [user-balance.json](fixtures/user-balance.json)                                                                                                                                                                                                                 |
+| GET    | `/payment-methods/`               | Deposit methods only                                                                | [subscription-payment-methods.json](fixtures/subscription-payment-methods.json)                                                                                                                                                                                 |
+| GET    | `/transactions/`                  | Wallet history                                                                      | [subscription-transactions-page1.json](fixtures/subscription-transactions-page1.json)                                                                                                                                                                           |
+| POST   | `/wallet-deposit/`                | Top-up wallet                                                                       | [wallet-deposit-request.json](fixtures/wallet-deposit-request.json)                                                                                                                                                                                             |
+| POST   | `/wallet-debit/`                  | Withdrawal hold (partner required)                                                  | Out of scope — see appendix                                                                                                                                                                                                                                     |
 
 ---
 
 ## Key concepts
 
-| Concept | Source | Use |
-|---------|--------|-----|
-| Plan cost | `plans[].costs[].slug` | Value for `plan_cost_slug` on subscribe |
-| Subscription | `GET …/` | Billing state, `feature_usage[]` |
-| Feature code | `features[]` / `feature_usage[]` | Path segment for access/bill |
-| Unpaid invoice | `unpaid_invoices[]` | Pay via public invoice API or top up wallet |
-| Billing retry | `billing_retry_exhausted` | When `true`, Celery skips auto-billing until payment succeeds |
+| Concept        | Source                           | Use                                                           |
+| -------------- | -------------------------------- | ------------------------------------------------------------- |
+| Plan cost      | `plans[].costs[].slug`           | Value for `plan_cost_slug` on subscribe                       |
+| Subscription   | `GET …/`                         | Billing state, `feature_usage[]`                              |
+| Feature code   | `features[]` / `feature_usage[]` | Path segment for access/bill                                  |
+| Unpaid invoice | `unpaid_invoices[]`              | Pay via public invoice API or top up wallet                   |
+| Billing retry  | `billing_retry_exhausted`        | When `true`, Celery skips auto-billing until payment succeeds |
 
 `GET …/` returns **all** subscriptions (active, inactive, cancelled). Filter client-side on `active`, `cancelled`, and `unpaid_invoices`.
 
@@ -133,11 +134,11 @@ Authorization: Bearer {access_token}
 X-Partner-Id: {partner_code}
 ```
 
-| Query | Meaning |
-|-------|---------|
+| Query           | Meaning                                                                        |
+| --------------- | ------------------------------------------------------------------------------ |
 | `page` / `size` | Pagination (same envelope fields as transactions; list key is `subscriptions`) |
-| `tags` | Comma-separated plan tags (AND) |
-| `point` | Optional geofence `longitude,latitude` |
+| `tags`          | Comma-separated plan tags (AND)                                                |
+| `point`         | Optional geofence `longitude,latitude`                                         |
 
 **Response `200`:** [subscriptions-list.json](fixtures/subscriptions-list.json) — includes `balance` plus `page`, `count`, `total_pages`, `next`, `previous`, `is_paginated`, and `subscriptions[]`.
 
@@ -164,11 +165,11 @@ Optional body `subscribed_partner` — integer PK or string code for the **subsc
 
 Optional correlation: [subscribe-request-with-client-reference.json](fixtures/subscribe-request-with-client-reference.json). `client_reference` and `metadata` persist on `UserSubscription.meta` and appear in `subscription.*` webhooks.
 
-| Response | Fixture |
-|----------|---------|
-| `201` — wallet funded, `active: true` | [subscribe-response.json](fixtures/subscribe-response.json) |
+| Response                                                    | Fixture                                                                                       |
+| ----------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| `201` — wallet funded, `active: true`                       | [subscribe-response.json](fixtures/subscribe-response.json)                                   |
 | `201` — underfunded, `active: false` + dunning + `recovery` | [subscribe-response-inactive-dunning.json](fixtures/subscribe-response-inactive-dunning.json) |
-| `400` — unknown slug (no bootstrap `plan` block) | [subscribe-error-unknown-slug.json](fixtures/subscribe-error-unknown-slug.json) |
+| `400` — unknown slug (no bootstrap `plan` block)            | [subscribe-error-unknown-slug.json](fixtures/subscribe-error-unknown-slug.json)               |
 
 **Recovery hints:** read-only `recovery.recommended_action` — `none` | `wallet_topup` | `pay_dunning_invoice` plus optional `dunning_invoice_uuid`. See [PRODUCTION.md](PRODUCTION.md).
 
@@ -206,8 +207,8 @@ Catalog responses may include GeoJSON `service_area` (`MultiPolygon` or `null`).
 
 Comma-separated optional fields. Supported today:
 
-| Include | Field | Meaning |
-|---------|-------|---------|
+| Include                   | Field                     | Meaning                                                                                                        |
+| ------------------------- | ------------------------- | -------------------------------------------------------------------------------------------------------------- |
 | `subscribed_plan_cost_id` | `subscribed_plan_cost_id` | Active `PlanCost` UUID for the caller on that plan, or `null` if not subscribed. **Omitted** unless requested. |
 
 ```http
@@ -256,9 +257,9 @@ GET /subscriptions/api/subscriptions/plan-options/?for_subscription={uuid}
 GET /subscriptions/api/subscriptions/plan-options/?point=39.28,-6.82
 ```
 
-| Query | Response fixture |
-|-------|------------------|
-| (none) — all costs | [plan-options-all.json](fixtures/plan-options-all.json) |
+| Query                                                | Response fixture                                                                  |
+| ---------------------------------------------------- | --------------------------------------------------------------------------------- |
+| (none) — all costs                                   | [plan-options-all.json](fixtures/plan-options-all.json)                           |
 | `for_subscription` — same plan, exclude current cost | [plan-options-for-subscription.json](fixtures/plan-options-for-subscription.json) |
 
 `change-plan` accepts **any** valid `PlanCost` slug — not limited to the `for_subscription` list.
@@ -280,10 +281,10 @@ Content-Type: application/json
 }
 ```
 
-| `effective_mode` | Behavior |
-|------------------|----------|
+| `effective_mode`      | Behavior                                                                                                                                                                             |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `immediate` (default) | Unused-time **credit** on the current plan + charge **full** new `PlanCost.cost` + restart `date_billing_last` / `date_billing_next`. Insufficient funds → **402** (plan unchanged). |
-| `next_cycle` | Keep current plan and billing dates; set `pending_plan_cost_*`. Applied on renewal (`process_due`): bill new cost, then swap. |
+| `next_cycle`          | Keep current plan and billing dates; set `pending_plan_cost_*`. Applied on renewal (`process_due`): bill new cost, then swap.                                                        |
 
 **Response `200`:** [change-plan-response.json](fixtures/change-plan-response.json) (includes `pending_plan_cost_id` / `pending_plan_cost_slug` when scheduled).
 
@@ -321,13 +322,13 @@ Optional query params when selecting which subscription row to use:
 
 Without `subscription_id` / `subscribed_partner`, the **most recently started** active subscription is used (after geo filter when `point` is set).
 
-| Scenario | Status | Fixture |
-|----------|--------|---------|
-| Allowed | `200`, `allowed: true` | [feature-access-allowed.json](fixtures/feature-access-allowed.json) |
-| Quota exhausted | `200`, `allowed: false` | [feature-access-quota-exhausted.json](fixtures/feature-access-quota-exhausted.json) |
-| Not on plan | `200`, `allowed: false` | [feature-access-not-on-plan.json](fixtures/feature-access-not-on-plan.json) |
-| No active subscription | `403` | [feature-access-no-subscription.json](fixtures/feature-access-no-subscription.json) |
-| Unknown feature | `404` | — |
+| Scenario               | Status                  | Fixture                                                                             |
+| ---------------------- | ----------------------- | ----------------------------------------------------------------------------------- |
+| Allowed                | `200`, `allowed: true`  | [feature-access-allowed.json](fixtures/feature-access-allowed.json)                 |
+| Quota exhausted        | `200`, `allowed: false` | [feature-access-quota-exhausted.json](fixtures/feature-access-quota-exhausted.json) |
+| Not on plan            | `200`, `allowed: false` | [feature-access-not-on-plan.json](fixtures/feature-access-not-on-plan.json)         |
+| No active subscription | `403`                   | [feature-access-no-subscription.json](fixtures/feature-access-no-subscription.json) |
+| Unknown feature        | `404`                   | —                                                                                   |
 
 Always call access **before** each gated action. For `rate` features, list `feature_usage[]` may zero `used` when the window elapsed — access is authoritative.
 
@@ -346,33 +347,33 @@ Content-Type: application/json
 
 Optional query params: `?subscription_id={uuid}` and/or `?subscribed_partner={id|code}` (see [§7](#7-feature-access-read-only)). `quantity` defaults to `1`, max `100`.
 
-| Scenario | Status | Fixture |
-|----------|--------|---------|
-| Within quota (no charge) | `200` | [feature-bill-response.json](fixtures/feature-bill-response.json) |
-| Overage / usage charge | `200` | [feature-bill-overage-charged.json](fixtures/feature-bill-overage-charged.json) |
-| Insufficient wallet | `402` | [feature-bill-insufficient-wallet.json](fixtures/feature-bill-insufficient-wallet.json) |
-| Quota exceeded, no overage | `429` | [feature-bill-quota-exceeded.json](fixtures/feature-bill-quota-exceeded.json) |
+| Scenario                   | Status | Fixture                                                                                 |
+| -------------------------- | ------ | --------------------------------------------------------------------------------------- |
+| Within quota (no charge)   | `200`  | [feature-bill-response.json](fixtures/feature-bill-response.json)                       |
+| Overage / usage charge     | `200`  | [feature-bill-overage-charged.json](fixtures/feature-bill-overage-charged.json)         |
+| Insufficient wallet        | `402`  | [feature-bill-insufficient-wallet.json](fixtures/feature-bill-insufficient-wallet.json) |
+| Quota exceeded, no overage | `429`  | [feature-bill-quota-exceeded.json](fixtures/feature-bill-quota-exceeded.json)           |
 
 ### Billing rules by `feature_type`
 
-| Type | Access | Bill |
-|------|--------|------|
-| `boolean` | `allowed` true/false | Not billable (`400`) |
-| `quota` | `used`, `remaining`, `quota` | Increments usage; overage debits wallet when `overage_rate` set |
-| `rate` | Windowed `remaining` | Increments within window; no wallet charge |
-| `usage` | Usage counters | Always debits wallet per `overage_rate` / tiers |
+| Type      | Access                       | Bill                                                            |
+| --------- | ---------------------------- | --------------------------------------------------------------- |
+| `boolean` | `allowed` true/false         | Not billable (`400`)                                            |
+| `quota`   | `used`, `remaining`, `quota` | Increments usage; overage debits wallet when `overage_rate` set |
+| `rate`    | Windowed `remaining`         | Increments within window; no wallet charge                      |
+| `usage`   | Usage counters               | Always debits wallet per `overage_rate` / tiers                 |
 
 **Concurrency:** send header `Idempotency-Key` on bill for safe retries (24h cache). Bill immediately after a successful action, or accept `402`/`429` if another request consumed quota first. After overage with wallet debit, `remaining` may be **negative**.
 
 ### HTTP status matrix
 
-| Situation | Access | Bill |
-|-----------|--------|------|
-| Allowed / billed | `200`, `allowed: true` | `200`, `status: "billed"` |
-| Feature not on plan | `200`, `allowed: false` | `400` |
-| Quota / rate exhausted (no overage) | `200`, `allowed: false` | `429` |
-| No active subscription | `403` | `403` |
-| Insufficient wallet | — | `402` |
+| Situation                           | Access                  | Bill                      |
+| ----------------------------------- | ----------------------- | ------------------------- |
+| Allowed / billed                    | `200`, `allowed: true`  | `200`, `status: "billed"` |
+| Feature not on plan                 | `200`, `allowed: false` | `400`                     |
+| Quota / rate exhausted (no overage) | `200`, `allowed: false` | `429`                     |
+| No active subscription              | `403`                   | `403`                     |
+| Insufficient wallet                 | —                       | `402`                     |
 
 ---
 
@@ -385,9 +386,22 @@ X-Partner-Id: {partner_code}
 
 **Response `200`:** [balance-with-methods.json](fixtures/balance-with-methods.json)
 
+`balance` is the amount in the default currency; `currency` names it and `balances[]` lists every currency the wallet holds — default currency first, then alphabetical. A wallet is one ledger account per `(user, partner)`, so the same user can hold different currencies and totals per partner. Amounts are signed and may be negative.
+
 Exclude `code === 'wallet'` from deposit method pickers. Synthetic `wallet` entry includes `meta.balance`, `meta.wallet_id`, `meta.partner`.
 
 Alternative: `GET …/payment-methods/?exclude_codes=cash,wallet` → [subscription-payment-methods.json](fixtures/subscription-payment-methods.json)
+
+### Balance for another user
+
+```http
+GET /subscriptions/api/subscriptions/user-balance/?user_id={id}
+X-Partner-Id: {partner_code}
+```
+
+**Response `200`:** [user-balance.json](fixtures/user-balance.json)
+
+Partner context is **required** here — unlike `…/balance/`, which falls back to the global wallet, a missing partner is `400` and a ref matching no row is `404`. Authorization: callers may read their own balance, `is_staff` / `is_superuser` may read any user, and partner staff may read users linked to the resolved partner; anything else is `403`. Errors are field-keyed on `partner` and `user_id`.
 
 ### Wallet top-up
 
@@ -454,11 +468,11 @@ Plan `grace_period` (days) affects dunning invoice `due_date`. During extended g
 
 Mobile and browser clients should **poll**; backend integrators register webhooks — [REFERENCE.md §6](REFERENCE.md#6-webhooks-server).
 
-| Event | When to use |
-|-------|-------------|
-| `wallet.deposit_succeeded` | Wallet top-up confirmed — refresh balance, retry subscribe |
-| `invoice.payment_succeeded` | Dunning invoice paid — refresh subscription state |
-| `payment.succeeded` / `payment.failed` | Gateway session during deposit or public pay |
+| Event                                  | When to use                                                |
+| -------------------------------------- | ---------------------------------------------------------- |
+| `wallet.deposit_succeeded`             | Wallet top-up confirmed — refresh balance, retry subscribe |
+| `invoice.payment_succeeded`            | Dunning invoice paid — refresh subscription state          |
+| `payment.succeeded` / `payment.failed` | Gateway session during deposit or public pay               |
 
 There are **no** partner webhooks for subscription activated/cancelled — poll `GET …/subscriptions/` or use wallet/invoice events above.
 
@@ -468,19 +482,19 @@ Register: `POST /shop/api/admin/webhooks/endpoints/` with `X-Partner-Id`.
 
 ## Errors (quick reference)
 
-| Condition | Status | Action |
-|-----------|--------|--------|
-| Not authenticated | `401` | Re-authenticate |
-| Bad / missing `plan_cost_slug` | `400` | Use slug from `GET …/plans/` |
-| `next_cycle` change plan | `200` | Pending applied on renewal |
-| Immediate change underfunded | `402` | Top up wallet; plan unchanged |
-| Feature not billable | `400` | Use access only |
-| No active subscription | `403` | Subscribe first |
-| Unknown feature code | `404` | Use codes from catalog |
-| Insufficient wallet on subscribe | `201`, `active: false` | Top up or pay dunning invoice |
-| Auto-billing stopped | `billing_retry_exhausted: true` | Pay dunning or top up |
-| Insufficient wallet on feature bill | `402` | Top up wallet |
-| Quota / rate limit exceeded | `429` | Upgrade, wait, or enable overage |
+| Condition                           | Status                          | Action                           |
+| ----------------------------------- | ------------------------------- | -------------------------------- |
+| Not authenticated                   | `401`                           | Re-authenticate                  |
+| Bad / missing `plan_cost_slug`      | `400`                           | Use slug from `GET …/plans/`     |
+| `next_cycle` change plan            | `200`                           | Pending applied on renewal       |
+| Immediate change underfunded        | `402`                           | Top up wallet; plan unchanged    |
+| Feature not billable                | `400`                           | Use access only                  |
+| No active subscription              | `403`                           | Subscribe first                  |
+| Unknown feature code                | `404`                           | Use codes from catalog           |
+| Insufficient wallet on subscribe    | `201`, `active: false`          | Top up or pay dunning invoice    |
+| Auto-billing stopped                | `billing_retry_exhausted: true` | Pay dunning or top up            |
+| Insufficient wallet on feature bill | `402`                           | Top up wallet                    |
+| Quota / rate limit exceeded         | `429`                           | Upgrade, wait, or enable overage |
 
 ---
 
@@ -512,7 +526,7 @@ import {
   billFeatureUsage,
   getDepositPaymentMethods,
   walletDeposit,
-} from '@fikashop/payment-gateway-client';
+} from "@fikashop/payment-gateway-client";
 ```
 
 Examples: [docs/examples/subscribe-and-topup.ts](../docs/examples/subscribe-and-topup.ts), [feature-gating-and-bill.ts](../docs/examples/feature-gating-and-bill.ts), [dunning-recovery.ts](../docs/examples/dunning-recovery.ts).

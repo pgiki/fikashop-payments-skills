@@ -1,0 +1,17 @@
+{
+  "user_id": 1187,
+  "partner_id": 42,
+  "partner_code": "acme-mobility",
+  "currency": "TZS",
+  "balance": "45250.0000",
+  "balances": [
+    {
+      "currency": "TZS",
+      "amount": "45250.0000"
+    },
+    {
+      "currency": "USD",
+      "amount": "18.5000"
+    }
+  ]
+}

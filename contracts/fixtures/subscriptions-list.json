@@ -1,5 +1,12 @@
 {
   "balance": "25000.0000",
+  "currency": "TZS",
+  "balances": [
+    {
+      "currency": "TZS",
+      "amount": "25000.0000"
+    }
+  ],
   "page": 1,
   "is_paginated": false,
   "next": null,

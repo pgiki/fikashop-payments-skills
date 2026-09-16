@@ -4,30 +4,32 @@ Integrate **fikashop-api** for **payments** (wallet top-up, invoice pay), **subs
 
 Auth is via **[oidc.fikachu.com](https://oidc.fikachu.com)** — reuse the same access token if your app already uses that IdP. List businesses with `GET /shop/api/admin/partners/` to obtain `X-Partner-Id` (`code` or `id`).
 
-| Path | What |
-|------|------|
-| [SKILL.md](SKILL.md) | Cursor agent skill — use `@fikashop-payments-skills` |
-| [contracts/SUBSCRIPTIONS.md](contracts/SUBSCRIPTIONS.md) | **Subscriptions integration guide** (self-contained) |
-| [contracts/PRODUCTION.md](contracts/PRODUCTION.md) | Production ops — idempotency, webhooks, tokens |
-| [contracts/STRIPE-MIGRATION.md](contracts/STRIPE-MIGRATION.md) | Stripe concept mapping |
-| [contracts/REFERENCE.md](contracts/REFERENCE.md) | Payments + webhooks contract |
-| [packages/ts](packages/ts) | Client SDK |
-| [packages/python](packages/python) | Webhook verify + handlers |
-| [PUBLISHING.md](PUBLISHING.md) | npm/PyPI publish + delegation notes |
-| [contracts/fixtures](contracts/fixtures) | Example JSON payloads |
-| [contracts/status-map.json](contracts/status-map.json) | Canonical status normalization |
+| Path                                                           | What                                                 |
+| -------------------------------------------------------------- | ---------------------------------------------------- |
+| [SKILL.md](SKILL.md)                                           | Cursor agent skill — use `@fikashop-payments-skills` |
+| [contracts/SUBSCRIPTIONS.md](contracts/SUBSCRIPTIONS.md)       | **Subscriptions integration guide** (self-contained) |
+| [contracts/PRODUCTION.md](contracts/PRODUCTION.md)             | Production ops — idempotency, webhooks, tokens       |
+| [contracts/STRIPE-MIGRATION.md](contracts/STRIPE-MIGRATION.md) | Stripe concept mapping                               |
+| [contracts/REFERENCE.md](contracts/REFERENCE.md)               | Payments + webhooks contract                         |
+| [packages/ts](packages/ts)                                     | Client SDK                                           |
+| [packages/python](packages/python)                             | Webhook verify + handlers                            |
+| [PUBLISHING.md](PUBLISHING.md)                                 | npm/PyPI publish + delegation notes                  |
+| [contracts/fixtures](contracts/fixtures)                       | Example JSON payloads                                |
+| [contracts/status-map.json](contracts/status-map.json)         | Canonical status normalization                       |
 
 ## Integration map
 
-| Use case | Flow | SDK helpers |
-|----------|------|-------------|
-| Wallet top-up | Checkout A | `getDepositPaymentMethods`, `walletDeposit` |
-| Pay shared invoice | Checkout B | `getPublicInvoice`, `initiatePublicPay`, `capturePayment` |
-| Subscribe to plan | Subscriptions | `getSubscriptionPlans`, `subscribeToPlan`, `listSubscriptions` |
-| Feature gating + usage | Subscriptions | `checkFeatureAccess`, `billFeatureUsage` |
-| Dunning recovery | Sub A or Checkout B | `walletDeposit` or `getPublicInvoice` + pay |
-| Change / cancel plan | Subscriptions | `getPlanOptions`, `changePlan`, `cancelSubscription` |
-| Async confirmation | Webhooks | `verifyUnifiedFikashopSignature`, `process_unified_webhook` |
+| Use case                      | Flow                | SDK helpers                                                    |
+| ----------------------------- | ------------------- | -------------------------------------------------------------- |
+| Wallet balance (own)          | Subscriptions       | `getSubscriptionBalance`                                       |
+| Wallet balance (another user) | Subscriptions       | `getUserBalance`                                               |
+| Wallet top-up                 | Checkout A          | `getDepositPaymentMethods`, `walletDeposit`                    |
+| Pay shared invoice            | Checkout B          | `getPublicInvoice`, `initiatePublicPay`, `capturePayment`      |
+| Subscribe to plan             | Subscriptions       | `getSubscriptionPlans`, `subscribeToPlan`, `listSubscriptions` |
+| Feature gating + usage        | Subscriptions       | `checkFeatureAccess`, `billFeatureUsage`                       |
+| Dunning recovery              | Sub A or Checkout B | `walletDeposit` or `getPublicInvoice` + pay                    |
+| Change / cancel plan          | Subscriptions       | `getPlanOptions`, `changePlan`, `cancelSubscription`           |
+| Async confirmation            | Webhooks            | `verifyUnifiedFikashopSignature`, `process_unified_webhook`    |
 
 ## Install as a Cursor skill
 
@@ -61,22 +63,24 @@ import {
   createFikashopClient,
   listUserPartners,
   parsePartnerList,
+  getSubscriptionBalance,
+  getUserBalance,
   getDepositPaymentMethods,
   getSubscriptionPlans,
   subscribeToPlan,
   checkFeatureAccess,
   billFeatureUsage,
   walletDeposit,
-} from '@fikashop/payment-gateway-client';
+} from "@fikashop/payment-gateway-client";
 
 const client = createFikashopClient({
-  baseUrl: 'https://api.fikashop.app',
+  baseUrl: "https://api.fikashop.app",
   getAccessToken: async () => token, // same token from oidc.fikachu.com
 });
 
 const partnersResp = await listUserPartners(client);
 const partners = parsePartnerList(partnersResp.data);
-client.configurePartner('https://api.fikashop.app', partners[0].code);
+client.configurePartner("https://api.fikashop.app", partners[0].code);
 
 // Subscribe (requires sufficient wallet balance)
 const plansResp = await getSubscriptionPlans(client);
@@ -84,14 +88,25 @@ const slug = plansResp.data?.[0]?.costs?.[0]?.slug;
 if (slug) await subscribeToPlan(client, slug);
 
 // Feature gate → bill
-const access = await checkFeatureAccess(client, 'sms_outbound');
+const access = await checkFeatureAccess(client, "sms_outbound");
 if (access.data?.allowed) {
-  await billFeatureUsage(client, 'sms_outbound', { quantity: 1 });
+  await billFeatureUsage(client, "sms_outbound", { quantity: 1 });
 }
 
-// Wallet top-up
+// Wallet balance — `balance` is the default currency; `balances[]` is the per-currency breakdown
+const wallet = await getSubscriptionBalance(client);
+const perCurrency = wallet.data?.balances ?? [];
+
+// Another user's partner-scoped balance (partner context required — configurePartner first)
+const other = await getUserBalance(client, userId);
+
+// Wallet top-up — fund the currency the user actually holds
 const { methods } = await getDepositPaymentMethods(client);
-await walletDeposit(client, { total: '10000.00', variant: methods[0].code, currency: 'TZS' });
+await walletDeposit(client, {
+  total: "10000.00",
+  variant: methods[0].code,
+  currency: wallet.data?.currency ?? "TZS",
+});
 ```
 
 **Webhooks (Python — unified events, preferred)**

@@ -1,6 +1,17 @@
 {
   "wallet_id": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
   "balance": "45250.0000",
+  "currency": "TZS",
+  "balances": [
+    {
+      "currency": "TZS",
+      "amount": "45250.0000"
+    },
+    {
+      "currency": "USD",
+      "amount": "18.5000"
+    }
+  ],
   "payment_methods": [
     {
       "code": "wallet",

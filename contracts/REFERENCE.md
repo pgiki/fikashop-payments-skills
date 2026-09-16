@@ -19,10 +19,10 @@ Fixtures: [fixtures/](fixtures/) — see [fixtures/README.md](fixtures/README.md
 
 ### Server vs client tokens
 
-| Context | Token | Use |
-|---------|-------|-----|
-| **Client** (React, RN, web) | End-user OIDC `access_token` from `https://oidc.fikachu.com` | Subscribe, wallet, invoice pay, feature bill |
-| **Server** (backend jobs) | `FIKASHOP_ADMIN_ACCESS_TOKEN` from fikashop dashboard **Settings → API keys** | Register webhook endpoints, admin partner APIs |
+| Context                     | Token                                                                         | Use                                            |
+| --------------------------- | ----------------------------------------------------------------------------- | ---------------------------------------------- |
+| **Client** (React, RN, web) | End-user OIDC `access_token` from `https://oidc.fikachu.com`                  | Subscribe, wallet, invoice pay, feature bill   |
+| **Server** (backend jobs)   | `FIKASHOP_ADMIN_ACCESS_TOKEN` from fikashop dashboard **Settings → API keys** | Register webhook endpoints, admin partner APIs |
 
 Subscription routes remain **user-scoped** (`IsAuthenticated`). The admin token is the business admin identity — not arbitrary customer impersonation.
 
@@ -36,19 +36,19 @@ The fikashop API authenticates via the **FikaChu IdP** at **`https://oidc.fikach
 
 If your app already signs users in through `oidc.fikachu.com`, reuse the **same access token** — no separate login needed.
 
-| Item | Value |
-|------|-------|
-| Issuer | `https://oidc.fikachu.com` |
+| Item      | Value                                                           |
+| --------- | --------------------------------------------------------------- |
+| Issuer    | `https://oidc.fikachu.com`                                      |
 | Discovery | `GET https://oidc.fikachu.com/.well-known/openid-configuration` |
-| Token | `POST https://oidc.fikachu.com/token/` |
+| Token     | `POST https://oidc.fikachu.com/token/`                          |
 
 ### Request headers
 
-| Header | Value |
-|--------|-------|
+| Header          | Value                                         |
+| --------------- | --------------------------------------------- |
 | `Authorization` | `Bearer {access_token}` from oidc.fikachu.com |
-| `X-Partner-Id` | Partner `code` or numeric `id` (see below) |
-| `Content-Type` | `application/json` |
+| `X-Partner-Id`  | Partner `code` or numeric `id` (see below)    |
+| `Content-Type`  | `application/json`                            |
 
 Default API base: `FIKASHOP_API_URL` / `EXPO_PUBLIC_FIKASHOP_API_URL` → `https://api.fikashop.app`
 
@@ -64,7 +64,7 @@ Authorization: Bearer {access_token}
 Returns paginated businesses the user may administer (`results[]`). Use each row's **`code`** (preferred) or **`id`** as `X-Partner-Id`. Let the user pick a business, then:
 
 ```ts
-client.configurePartner('https://api.fikashop.app', selectedPartner.code);
+client.configurePartner("https://api.fikashop.app", selectedPartner.code);
 ```
 
 Fixture: [fixtures/partners-list.json](fixtures/partners-list.json)
@@ -85,10 +85,10 @@ client.configurePartner(profile.billing_partner_base_url, xPartnerId);
 
 Methods are **server-driven** — never hardcode lists.
 
-| Use case | GET endpoint | Notes |
-|----------|--------------|-------|
-| Top-up | `/subscriptions/api/subscriptions/balance/` | Use `payment_methods`; exclude `code === 'wallet'` |
-| Pay invoice | `/invoices/api/public/{uuid}/` | Respect `public_pay_blocked` |
+| Use case    | GET endpoint                                | Notes                                              |
+| ----------- | ------------------------------------------- | -------------------------------------------------- |
+| Top-up      | `/subscriptions/api/subscriptions/balance/` | Use `payment_methods`; exclude `code === 'wallet'` |
+| Pay invoice | `/invoices/api/public/{uuid}/`              | Respect `public_pay_blocked`                       |
 
 Each method: `code`, `name`, `method_type`, optional `description`, optional `image_url`, optional `input_fields[]`, `countries[]` (ISO 3166-1 alpha-2 codes; empty means available worldwide).
 
@@ -98,17 +98,21 @@ Synthetic **`wallet`** method (when balance > 0): not a DB row — appended by t
 
 Fixture: [fixtures/balance-with-methods.json](fixtures/balance-with-methods.json)
 
+**Multi-currency balances:** `balance` is always the default currency (`settings.DEFAULT_CURRENCY`, e.g. `TZS`), the accompanying `currency` names it, and `balances[]` lists every currency the wallet holds — default currency first, then alphabetical. A wallet is one ledger account per `(user, partner)`, so the same user can hold different currencies and different totals per partner. Amounts are signed, so a wallet balance may be negative.
+
+Per-user lookup (partner context required): `GET /subscriptions/api/subscriptions/user-balance/?user_id={id}` → [fixtures/user-balance.json](fixtures/user-balance.json). A missing partner is `400`, an unknown partner ref `404`, and an unauthorised `user_id` `403`. Callers may read their own balance, `is_staff`/`is_superuser` may read anyone's, and partner staff may read users linked to that partner.
+
 ### input_fields
 
-| Property | Purpose |
-|----------|---------|
-| `code` | Form key **and** submit key (balance API may use `name` — normalize to `code`) |
-| `label`, `type`, `is_required`, `help_text`, `default_value` | UI |
+| Property                                                     | Purpose                                                                        |
+| ------------------------------------------------------------ | ------------------------------------------------------------------------------ |
+| `code`                                                       | Form key **and** submit key (balance API may use `name` — normalize to `code`) |
+| `label`, `type`, `is_required`, `help_text`, `default_value` | UI                                                                             |
 
-| `type` | Control | Submit as |
-|--------|---------|-----------|
-| `text` | Text input | `string` |
-| `boolean` / `checkbox` | Switch | `boolean` |
+| `type`                 | Control    | Submit as |
+| ---------------------- | ---------- | --------- |
+| `text`                 | Text input | `string`  |
+| `boolean` / `checkbox` | Switch     | `boolean` |
 
 **Rules:** build form from **selected method only**; reset on method change; submit `{ [field.code]: value }`.
 
@@ -138,8 +142,8 @@ Key fixtures: [subscriptions-list.json](fixtures/subscriptions-list.json), [subs
 
 ### A — Wallet top-up (one POST)
 
-1. `GET /subscriptions/api/subscriptions/balance/` → balance + methods  
-2. User picks method, fills `input_fields`  
+1. `GET /subscriptions/api/subscriptions/balance/` → balance + methods
+2. User picks method, fills `input_fields`
 3. `POST /subscriptions/api/subscriptions/wallet-deposit/`
 
 ```json
@@ -156,18 +160,18 @@ Key fixtures: [subscriptions-list.json](fixtures/subscriptions-list.json), [subs
 
 ### B — Shared invoice (two steps)
 
-1. `GET /invoices/api/public/{uuid}/`  
-2. User picks method (`wallet` → redirect to top-up with invoice balance)  
-3. `POST /invoices/api/public/{uuid}/pay/` → `{ "payment_method_code": "mpesa" }`  
-4. Response: `payment_reference` and `process_url` (fixture: [fixtures/public-pay-init.json](fixtures/public-pay-init.json))  
-5. Render selected method's `input_fields` — **submit on capture, not on `/pay/`**  
+1. `GET /invoices/api/public/{uuid}/`
+2. User picks method (`wallet` → redirect to top-up with invoice balance)
+3. `POST /invoices/api/public/{uuid}/pay/` → `{ "payment_method_code": "mpesa" }`
+4. Response: `payment_reference` and `process_url` (fixture: [fixtures/public-pay-init.json](fixtures/public-pay-init.json))
+5. Render selected method's `input_fields` — **submit on capture, not on `/pay/`**
 6. `POST /payments/process/{payment_reference}/` (no `/shop/api` prefix)
 
 ```json
 { "action": "capture", "input_fields": { "billing_phone": "+255..." } }
 ```
 
-7. `GET /invoices/api/public/{uuid}/` to refresh  
+7. `GET /invoices/api/public/{uuid}/` to refresh
 8. Same redirect handling as top-up
 
 **Currency** for display comes from the host profile, not the balance endpoint.
@@ -176,18 +180,18 @@ Key fixtures: [subscriptions-list.json](fixtures/subscriptions-list.json), [subs
 
 ### Response shapes
 
-| Step | Key fields | Fixture |
-|------|------------|---------|
-| Balance + methods | `wallet_id`, `payment_methods[]`, synthetic `wallet.meta` | [balance-with-methods.json](fixtures/balance-with-methods.json) |
-| Top-up confirmed | `status: success` (sync providers / emulator) | [wallet-deposit-confirmed.json](fixtures/wallet-deposit-confirmed.json) |
-| Top-up redirect | `status: redirect`, `redirect_url`, `meta.intent` | [wallet-deposit-redirect.json](fixtures/wallet-deposit-redirect.json) |
-| Invoice detail | items, totals, `external_invoice_reference` | [public-invoice-with-methods.json](fixtures/public-invoice-with-methods.json) |
-| Invoice blocked | `public_pay_blocked: true`, empty methods | [public-invoice-blocked.json](fixtures/public-invoice-blocked.json) |
-| Pay init (201) | `payment_reference`, `process_url`, `amount`, `currency` | [public-pay-init.json](fixtures/public-pay-init.json) |
-| Capture waiting | `status: waiting`, provider STK initiated | [capture-success.json](fixtures/capture-success.json) |
-| Capture redirect | `status: redirect`, `redirect_url` | [capture-redirect.json](fixtures/capture-redirect.json) |
-| Capture error | `status: error`, `detail` | [capture-error.json](fixtures/capture-error.json) |
-| Webhook paid / pending / failed | `invoice_id`, `status`, `event_id` | [webhook-payment-paid.json](fixtures/webhook-payment-paid.json), [pending](fixtures/webhook-payment-pending.json), [failed](fixtures/webhook-payment-failed.json) |
+| Step                            | Key fields                                                                                     | Fixture                                                                                                                                                           |
+| ------------------------------- | ---------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Balance + methods               | `wallet_id`, `balance`, `currency`, `balances[]`, `payment_methods[]`, synthetic `wallet.meta` | [balance-with-methods.json](fixtures/balance-with-methods.json)                                                                                                   |
+| Top-up confirmed                | `status: success` (sync providers / emulator)                                                  | [wallet-deposit-confirmed.json](fixtures/wallet-deposit-confirmed.json)                                                                                           |
+| Top-up redirect                 | `status: redirect`, `redirect_url`, `meta.intent`                                              | [wallet-deposit-redirect.json](fixtures/wallet-deposit-redirect.json)                                                                                             |
+| Invoice detail                  | items, totals, `external_invoice_reference`                                                    | [public-invoice-with-methods.json](fixtures/public-invoice-with-methods.json)                                                                                     |
+| Invoice blocked                 | `public_pay_blocked: true`, empty methods                                                      | [public-invoice-blocked.json](fixtures/public-invoice-blocked.json)                                                                                               |
+| Pay init (201)                  | `payment_reference`, `process_url`, `amount`, `currency`                                       | [public-pay-init.json](fixtures/public-pay-init.json)                                                                                                             |
+| Capture waiting                 | `status: waiting`, provider STK initiated                                                      | [capture-success.json](fixtures/capture-success.json)                                                                                                             |
+| Capture redirect                | `status: redirect`, `redirect_url`                                                             | [capture-redirect.json](fixtures/capture-redirect.json)                                                                                                           |
+| Capture error                   | `status: error`, `detail`                                                                      | [capture-error.json](fixtures/capture-error.json)                                                                                                                 |
+| Webhook paid / pending / failed | `invoice_id`, `status`, `event_id`                                                             | [webhook-payment-paid.json](fixtures/webhook-payment-paid.json), [pending](fixtures/webhook-payment-pending.json), [failed](fixtures/webhook-payment-failed.json) |
 
 ### Standardized response envelope
 
@@ -201,12 +205,12 @@ All payment capture, wallet deposit, and webhook responses use the same shape:
 }
 ```
 
-| `status` | Meaning | Client action |
-|----------|---------|---------------|
-| `"success"` | Synchronous confirm (LIPA Pay, emulator) | Done — poll invoice or balance |
-| `"waiting"` | Async accepted (STK push, provider callback pending) | Wait for webhook |
-| `"redirect"` | Must open `redirect_url` in browser | Open URL |
-| `"error"` | Validation or provider failure | Show `detail` |
+| `status`     | Meaning                                              | Client action                  |
+| ------------ | ---------------------------------------------------- | ------------------------------ |
+| `"success"`  | Synchronous confirm (LIPA Pay, emulator)             | Done — poll invoice or balance |
+| `"waiting"`  | Async accepted (STK push, provider callback pending) | Wait for webhook               |
+| `"redirect"` | Must open `redirect_url` in browser                  | Open URL                       |
+| `"error"`    | Validation or provider failure                       | Show `detail`                  |
 
 Error responses include `code` (HTTP status) and omit `meta`:
 
@@ -230,23 +234,24 @@ Canonical status lists: [status-map.json](status-map.json)
 
 ## 5. Endpoints (quick table)
 
-| Method | Path | Purpose |
-|--------|------|---------|
-| GET | `/shop/api/admin/partners/` | Businesses linked to user → `X-Partner-Id` |
-| GET | `/subscriptions/api/subscriptions/` | List subscriptions + wallet balance (`?page=`/`?size=`, `?tags=`, `?point=`) — [subscriptions-list.json](fixtures/subscriptions-list.json) |
-| GET | `/subscriptions/api/subscriptions/plans/` | Plan catalog — `?tags=`, `?point=`, `?includes=subscribed_plan_cost_id` — [subscription-plans.json](fixtures/subscription-plans.json) |
-| GET | `/subscriptions/api/subscriptions/plans/{plan_id}/` | Plan detail — [subscription-plan-detail.json](fixtures/subscription-plan-detail.json) |
-| GET | `/subscriptions/api/subscriptions/usage-by-plan/{plan_id}/` | Usage for plan — [usage-by-plan-response.json](fixtures/usage-by-plan-response.json) |
-| GET | `/subscriptions/api/subscriptions/usage-by-id/{subscription_id}/` | Usage by subscription id |
-| GET | `/subscriptions/api/subscriptions/features/{code}/access/` | Feature access — [feature-access-allowed.json](fixtures/feature-access-allowed.json) |
-| POST | `/subscriptions/api/subscriptions/features/{code}/bill/` | Bill usage — [feature-bill-response.json](fixtures/feature-bill-response.json) |
-| GET | `/subscriptions/api/subscriptions/plan-options/` | Alternate costs — [plan-options-all.json](fixtures/plan-options-all.json) |
-| POST | `/subscriptions/api/subscriptions/` | Subscribe — [subscribe-response.json](fixtures/subscribe-response.json) |
-| POST | `/subscriptions/api/subscriptions/change-plan/` | Change plan — [change-plan-response.json](fixtures/change-plan-response.json) |
-| POST | `/subscriptions/api/subscriptions/cancel/` | Cancel — [cancel-response.json](fixtures/cancel-response.json) |
-| GET | `/subscriptions/api/subscriptions/transactions/` | History — [subscription-transactions-page1.json](fixtures/subscription-transactions-page1.json) |
-| GET | `/subscriptions/api/subscriptions/balance/` | Balance + methods — [balance-with-methods.json](fixtures/balance-with-methods.json) |
-| POST | `/subscriptions/api/subscriptions/wallet-deposit/` | Top-up — [wallet-deposit-request.json](fixtures/wallet-deposit-request.json) |
+| Method | Path                                                              | Purpose                                                                                                                                    |
+| ------ | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| GET    | `/shop/api/admin/partners/`                                       | Businesses linked to user → `X-Partner-Id`                                                                                                 |
+| GET    | `/subscriptions/api/subscriptions/`                               | List subscriptions + wallet balance (`?page=`/`?size=`, `?tags=`, `?point=`) — [subscriptions-list.json](fixtures/subscriptions-list.json) |
+| GET    | `/subscriptions/api/subscriptions/plans/`                         | Plan catalog — `?tags=`, `?point=`, `?includes=subscribed_plan_cost_id` — [subscription-plans.json](fixtures/subscription-plans.json)      |
+| GET    | `/subscriptions/api/subscriptions/plans/{plan_id}/`               | Plan detail — [subscription-plan-detail.json](fixtures/subscription-plan-detail.json)                                                      |
+| GET    | `/subscriptions/api/subscriptions/usage-by-plan/{plan_id}/`       | Usage for plan — [usage-by-plan-response.json](fixtures/usage-by-plan-response.json)                                                       |
+| GET    | `/subscriptions/api/subscriptions/usage-by-id/{subscription_id}/` | Usage by subscription id                                                                                                                   |
+| GET    | `/subscriptions/api/subscriptions/features/{code}/access/`        | Feature access — [feature-access-allowed.json](fixtures/feature-access-allowed.json)                                                       |
+| POST   | `/subscriptions/api/subscriptions/features/{code}/bill/`          | Bill usage — [feature-bill-response.json](fixtures/feature-bill-response.json)                                                             |
+| GET    | `/subscriptions/api/subscriptions/plan-options/`                  | Alternate costs — [plan-options-all.json](fixtures/plan-options-all.json)                                                                  |
+| POST   | `/subscriptions/api/subscriptions/`                               | Subscribe — [subscribe-response.json](fixtures/subscribe-response.json)                                                                    |
+| POST   | `/subscriptions/api/subscriptions/change-plan/`                   | Change plan — [change-plan-response.json](fixtures/change-plan-response.json)                                                              |
+| POST   | `/subscriptions/api/subscriptions/cancel/`                        | Cancel — [cancel-response.json](fixtures/cancel-response.json)                                                                             |
+| GET    | `/subscriptions/api/subscriptions/transactions/`                  | History — [subscription-transactions-page1.json](fixtures/subscription-transactions-page1.json)                                            |
+| GET    | `/subscriptions/api/subscriptions/balance/`                       | Balance + methods — [balance-with-methods.json](fixtures/balance-with-methods.json)                                                        |
+| GET    | `/subscriptions/api/subscriptions/user-balance/`                  | Partner-scoped balance for a user (`?user_id=`, partner required) — [user-balance.json](fixtures/user-balance.json)                        |
+| POST   | `/subscriptions/api/subscriptions/wallet-deposit/`                | Top-up — [wallet-deposit-request.json](fixtures/wallet-deposit-request.json)                                                               |
 
 **Idempotency:** send header `Idempotency-Key` (or `X-Idempotency-Key`) on `POST …/subscriptions/`, `POST …/wallet-deposit/`, and `POST …/features/{code}/bill/`. Same key replays the cached response for 24h. SDK: `subscribeToPlan`, `walletDeposit`, and `billFeatureUsage` accept `idempotencyKey`.
 
@@ -267,11 +272,11 @@ Canonical status lists: [status-map.json](status-map.json)
 
 ### Optional / alternate endpoints
 
-| Method | Path | Notes |
-|--------|------|-------|
-| GET | `/invoices/api/public/{uuid}/payment-methods/` | Methods only (mobile apps) |
-| GET | `/subscriptions/api/subscriptions/payment-methods/` | Deposit methods with `?exclude_codes=` |
-| GET | `/shop/api/checkout/payment-methods/available/` | Storefront checkout methods |
+| Method | Path                                                | Notes                                  |
+| ------ | --------------------------------------------------- | -------------------------------------- |
+| GET    | `/invoices/api/public/{uuid}/payment-methods/`      | Methods only (mobile apps)             |
+| GET    | `/subscriptions/api/subscriptions/payment-methods/` | Deposit methods with `?exclude_codes=` |
+| GET    | `/shop/api/checkout/payment-methods/available/`     | Storefront checkout methods            |
 
 ---
 
@@ -298,13 +303,13 @@ Content-Type: application/json
 }
 ```
 
-| Field | Type | Notes |
-|-------|------|-------|
-| `url` | string (required) | Your HTTPS receiver endpoint |
-| `secret` | string (write-only) | Signs `Fikashop-Signature`; never returned in responses |
-| `enabled` | boolean | Default `true` |
-| `is_default` | boolean | Default `false`; `true` = default receiver for the partner |
-| `subscribed_events` | array of strings | Empty `[]` = all event types; otherwise allowed types below |
+| Field               | Type                | Notes                                                       |
+| ------------------- | ------------------- | ----------------------------------------------------------- |
+| `url`               | string (required)   | Your HTTPS receiver endpoint                                |
+| `secret`            | string (write-only) | Signs `Fikashop-Signature`; never returned in responses     |
+| `enabled`           | boolean             | Default `true`                                              |
+| `is_default`        | boolean             | Default `false`; `true` = default receiver for the partner  |
+| `subscribed_events` | array of strings    | Empty `[]` = all event types; otherwise allowed types below |
 
 Returns `201` with `{ id, uuid, url, enabled, is_default, subscribed_events, description, created_at, updated_at }` (no `secret`).
 
@@ -341,21 +346,21 @@ Fixture: [fixtures/webhook-event-envelope.json](fixtures/webhook-event-envelope.
 
 **Event types (v1):**
 
-| Type | When |
-|------|------|
-| `payment.created` | Gateway payment session opened |
-| `payment.processing` | Payment waiting / in flight |
-| `payment.succeeded` | Gateway payment confirmed |
-| `payment.failed` / `payment.cancelled` | Payment error or cancelled |
-| `payment.refunded` | Refund posted |
-| `invoice.created` / `invoice.updated` / `invoice.cancelled` | Invoice lifecycle |
-| `invoice.payment_succeeded` | Invoice paid or partially paid |
-| `invoice.settlement_posted` / `invoice.settlement_failed` | Ledger settlement |
-| `wallet.deposit_succeeded` | Wallet top-up credited |
-| `subscription.created` | User subscribed via API |
-| `subscription.updated` | Activation, renewal, dunning recovery, billing state |
-| `subscription.cancelled` | Subscription cancelled |
-| `subscription.past_due` | Dunning invoice or failed renewal |
+| Type                                                        | When                                                 |
+| ----------------------------------------------------------- | ---------------------------------------------------- |
+| `payment.created`                                           | Gateway payment session opened                       |
+| `payment.processing`                                        | Payment waiting / in flight                          |
+| `payment.succeeded`                                         | Gateway payment confirmed                            |
+| `payment.failed` / `payment.cancelled`                      | Payment error or cancelled                           |
+| `payment.refunded`                                          | Refund posted                                        |
+| `invoice.created` / `invoice.updated` / `invoice.cancelled` | Invoice lifecycle                                    |
+| `invoice.payment_succeeded`                                 | Invoice paid or partially paid                       |
+| `invoice.settlement_posted` / `invoice.settlement_failed`   | Ledger settlement                                    |
+| `wallet.deposit_succeeded`                                  | Wallet top-up credited                               |
+| `subscription.created`                                      | User subscribed via API                              |
+| `subscription.updated`                                      | Activation, renewal, dunning recovery, billing state |
+| `subscription.cancelled`                                    | Subscription cancelled                               |
+| `subscription.past_due`                                     | Dunning invoice or failed renewal                    |
 
 Correlate invoice pay via `data.object.external_invoice_reference` or `invoice_uuid`. Wallet top-ups use `intent: wallet-deposit`. Subscriptions expose `client_reference` and `recovery` hints on API responses.
 
@@ -378,9 +383,9 @@ Stripe-style envelope (`id`, `type`, `data.object`) — see Delivered envelope a
 
 ### Handler steps
 
-1. Verify `Fikashop-Signature` → `403` if invalid  
-2. Parse JSON; use envelope `id` as `event_id`  
-3. Duplicate `event_id` → `200 { "received": true, "duplicate": true }`  
+1. Verify `Fikashop-Signature` → `403` if invalid
+2. Parse JSON; use envelope `id` as `event_id`
+3. Duplicate `event_id` → `200 { "received": true, "duplicate": true }`
 4. Route by `type` → `200 { "received": true }`
 
 **Libraries:** `packages/python` (`process_unified_webhook`, `create_webhook_router`, `verify_unified_fikashop_signature`), `packages/ts` (`processUnifiedWebhook`, `createWebhookRouter`, `verifyUnifiedFikashopSignature`, poll helpers).
@@ -393,10 +398,10 @@ Use the signed envelope fixture and `verify_unified_fikashop_signature` / `verif
 
 ## 7. Pitfalls
 
-- Submit `input_fields` keyed by `code`, not `label` or `name`  
-- Re-serializing JSON before HMAC breaks signatures  
-- Missing partner config before API calls  
-- Relying only on client refresh after redirect — use webhooks for final state  
-- Prefixing `/payments/process/` with `/shop/api/` (wrong — `/payments/` is root-mounted)  
-- Subscribing before wallet has sufficient balance — top up first (Checkout A) or handle inactive subscription retry  
+- Submit `input_fields` keyed by `code`, not `label` or `name`
+- Re-serializing JSON before HMAC breaks signatures
+- Missing partner config before API calls
+- Relying only on client refresh after redirect — use webhooks for final state
+- Prefixing `/payments/process/` with `/shop/api/` (wrong — `/payments/` is root-mounted)
+- Subscribing before wallet has sufficient balance — top up first (Checkout A) or handle inactive subscription retry
 - Confusing `status: "success"` (sync confirm) with `status: "waiting"` (async — wait for webhook) with raw webhook `confirmed` status
