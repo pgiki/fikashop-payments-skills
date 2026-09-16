@@ -113,7 +113,7 @@ Base path: `/subscriptions/api/subscriptions/`.
 
 1. `GET …/subscriptions/` — paginated subscriptions + wallet `balance`, `currency`, `balances[]` (`?page=`/`?size=`, `?tags=` AND, `?point=`); filter on `active`, `cancelled`, `unpaid_invoices`
 2. `GET …/balance/` — caller's wallet: `wallet_id`, `balance` (default currency), `currency`, `balances[]`, deposit-eligible `payment_methods`
-3. `GET …/user-balance/?user_id=` — another user's partner-scoped balance. Partner context **required** (`400` if absent, `404` if unknown); allowed for self, `is_staff`/`is_superuser`, or partner staff reading a user linked to that partner (`403` otherwise)
+3. `GET …/user-balance/` — another user's partner-scoped balance, by **exactly one** of `?user_id=` / `?phone=` / `?email=`. Partner context **required** (`400` if absent, `404` if unknown); allowed for self, `is_staff`/`is_superuser`, or partner staff reading a user linked to that partner (`403` otherwise). An email shared by two users is a `400`. SDK: `getUserBalance(client, { userId | phone | email })`
 4. `GET …/plans/` — read-only catalog; `?tags=` (AND), `?point=lng,lat` (geofence), `?includes=subscribed_plan_cost_id`; subscribe with `costs[].slug`
 5. `GET …/plans/{plan_id}/` — single plan (same scope rules)
 6. `GET …/usage-by-plan/{plan_id}/` or `…/usage-by-id/{subscription_id}/` — subscription + `feature_usage`

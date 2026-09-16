@@ -103,7 +103,7 @@ Base path: **`/subscriptions/api/subscriptions/`**
 | POST   | `/change-plan/`                   | Change billing option (`immediate` prorate / `next_cycle` pending)                  | [change-plan-response.json](fixtures/change-plan-response.json), [change-plan-next-cycle-response.json](fixtures/change-plan-next-cycle-response.json)                                                                                                          |
 | POST   | `/cancel/`                        | Cancel subscription                                                                 | [cancel-response.json](fixtures/cancel-response.json)                                                                                                                                                                                                           |
 | GET    | `/balance/`                       | Balance + deposit methods                                                           | [balance-with-methods.json](fixtures/balance-with-methods.json)                                                                                                                                                                                                 |
-| GET    | `/user-balance/?user_id=`         | Partner-scoped balance for another user (partner required)                          | [user-balance.json](fixtures/user-balance.json)                                                                                                                                                                                                                 |
+| GET    | `/user-balance/`                  | Balance for another user (`?user_id=` / `?phone=` / `?email=`, partner required)    | [user-balance.json](fixtures/user-balance.json)                                                                                                                                                                                                                 |
 | GET    | `/payment-methods/`               | Deposit methods only                                                                | [subscription-payment-methods.json](fixtures/subscription-payment-methods.json)                                                                                                                                                                                 |
 | GET    | `/transactions/`                  | Wallet history                                                                      | [subscription-transactions-page1.json](fixtures/subscription-transactions-page1.json)                                                                                                                                                                           |
 | POST   | `/wallet-deposit/`                | Top-up wallet                                                                       | [wallet-deposit-request.json](fixtures/wallet-deposit-request.json)                                                                                                                                                                                             |
@@ -394,14 +394,22 @@ Alternative: `GET …/payment-methods/?exclude_codes=cash,wallet` → [subscript
 
 ### Balance for another user
 
+Select the user with **exactly one** of `user_id`, `phone`, or `email`.
+
 ```http
 GET /subscriptions/api/subscriptions/user-balance/?user_id={id}
+GET /subscriptions/api/subscriptions/user-balance/?phone={phone}
+GET /subscriptions/api/subscriptions/user-balance/?email={email}
 X-Partner-Id: {partner_code}
 ```
 
 **Response `200`:** [user-balance.json](fixtures/user-balance.json)
 
-Partner context is **required** here — unlike `…/balance/`, which falls back to the global wallet, a missing partner is `400` and a ref matching no row is `404`. Authorization: callers may read their own balance, `is_staff` / `is_superuser` may read any user, and partner staff may read users linked to the resolved partner; anything else is `403`. Errors are field-keyed on `partner` and `user_id`.
+`phone` accepts E.164 (`+255712345678`) or local form (`0712345678`, default region `TZ`). `email` is matched case-insensitively; because `User.email` is not unique, an address shared by two users is a `400` rather than an arbitrary pick.
+
+Partner context is **required** here — unlike `…/balance/`, which falls back to the global wallet, a missing partner is `400` and a ref matching no row is `404`. Authorization: callers may read their own balance, `is_staff` / `is_superuser` may read any user, and partner staff may read users linked to the resolved partner; anything else is `403`.
+
+Errors are field-keyed on `user_id`, `phone`, `email` and `partner`, each value a plain string. A `detail` key means no single input was at fault — it carries `"Provide exactly one of user_id, phone, or email."` when none or several identifiers were sent.
 
 ### Wallet top-up
 

@@ -100,7 +100,7 @@ Fixture: [fixtures/balance-with-methods.json](fixtures/balance-with-methods.json
 
 **Multi-currency balances:** `balance` is always the default currency (`settings.DEFAULT_CURRENCY`, e.g. `TZS`), the accompanying `currency` names it, and `balances[]` lists every currency the wallet holds — default currency first, then alphabetical. A wallet is one ledger account per `(user, partner)`, so the same user can hold different currencies and different totals per partner. Amounts are signed, so a wallet balance may be negative.
 
-Per-user lookup (partner context required): `GET /subscriptions/api/subscriptions/user-balance/?user_id={id}` → [fixtures/user-balance.json](fixtures/user-balance.json). A missing partner is `400`, an unknown partner ref `404`, and an unauthorised `user_id` `403`. Callers may read their own balance, `is_staff`/`is_superuser` may read anyone's, and partner staff may read users linked to that partner.
+Per-user lookup (partner context required): `GET /subscriptions/api/subscriptions/user-balance/` with **exactly one** of `?user_id=`, `?phone=` or `?email=` → [fixtures/user-balance.json](fixtures/user-balance.json). `phone` takes E.164 or local form (region `TZ`); `email` is case-insensitive and must resolve to a single user, since `User.email` is not unique. A missing partner is `400`, an unknown partner ref `404`, and an unauthorised subject `403`. Callers may read their own balance, `is_staff`/`is_superuser` may read anyone's, and partner staff may read users linked to that partner.
 
 ### input_fields
 
@@ -250,7 +250,7 @@ Canonical status lists: [status-map.json](status-map.json)
 | POST   | `/subscriptions/api/subscriptions/cancel/`                        | Cancel — [cancel-response.json](fixtures/cancel-response.json)                                                                             |
 | GET    | `/subscriptions/api/subscriptions/transactions/`                  | History — [subscription-transactions-page1.json](fixtures/subscription-transactions-page1.json)                                            |
 | GET    | `/subscriptions/api/subscriptions/balance/`                       | Balance + methods — [balance-with-methods.json](fixtures/balance-with-methods.json)                                                        |
-| GET    | `/subscriptions/api/subscriptions/user-balance/`                  | Partner-scoped balance for a user (`?user_id=`, partner required) — [user-balance.json](fixtures/user-balance.json)                        |
+| GET    | `/subscriptions/api/subscriptions/user-balance/`                  | Balance by `?user_id=` / `?phone=` / `?email=` (partner required) — [user-balance.json](fixtures/user-balance.json)                        |
 | POST   | `/subscriptions/api/subscriptions/wallet-deposit/`                | Top-up — [wallet-deposit-request.json](fixtures/wallet-deposit-request.json)                                                               |
 
 **Idempotency:** send header `Idempotency-Key` (or `X-Idempotency-Key`) on `POST …/subscriptions/`, `POST …/wallet-deposit/`, and `POST …/features/{code}/bill/`. Same key replays the cached response for 24h. SDK: `subscribeToPlan`, `walletDeposit`, and `billFeatureUsage` accept `idempotencyKey`.
