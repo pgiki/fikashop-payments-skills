@@ -12,7 +12,9 @@ import type {
   SubscriptionListResponse,
   SubscriptionPlanCatalogItem,
   SubscriptionTransaction,
-  SubscriptionWalletBalanceResponse,  UserBalanceIdentity,  UserBalanceResponse,
+  SubscriptionWalletBalanceResponse,
+  UserBalanceIdentity,
+  UserBalanceResponse,
   UserSubscription,
   WalletDepositResponse,
 } from "./types.js";
@@ -122,8 +124,8 @@ export async function getSubscriptionBalance(client: FikashopClient) {
 function userBalanceParams(
   identity: UserBalanceIdentity,
 ): Record<string, string | number> {
-  if ('userId' in identity) return { user_id: identity.userId };
-  if ('phone' in identity) return { phone: identity.phone };
+  if ("userId" in identity) return { user_id: identity.userId };
+  if ("phone" in identity) return { phone: identity.phone };
   return { email: identity.email };
 }
 

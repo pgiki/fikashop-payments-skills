@@ -22,7 +22,7 @@ Auth is via **[oidc.fikachu.com](https://oidc.fikachu.com)** — reuse the same 
 | Use case                      | Flow                | SDK helpers                                                    |
 | ----------------------------- | ------------------- | -------------------------------------------------------------- |
 | Wallet balance (own)          | Subscriptions       | `getSubscriptionBalance`                                       |
-| Wallet balance (another user) | Subscriptions       | `getUserBalance(client, { userId \| phone \| email })`          |
+| Wallet balance (another user) | Subscriptions       | `getUserBalance(client, { userId \| phone \| email })`         |
 | Wallet top-up                 | Checkout A          | `getDepositPaymentMethods`, `walletDeposit`                    |
 | Pay shared invoice            | Checkout B          | `getPublicInvoice`, `initiatePublicPay`, `capturePayment`      |
 | Subscribe to plan             | Subscriptions       | `getSubscriptionPlans`, `subscribeToPlan`, `listSubscriptions` |
@@ -99,8 +99,8 @@ const perCurrency = wallet.data?.balances ?? [];
 
 // Another user's partner-scoped balance — pass exactly one identifier.
 // Partner context is required, so configurePartner above must run first.
-const other = await getUserBalance(client, { phone: '0712345678' });
-const byEmail = await getUserBalance(client, { email: 'customer@example.com' });
+const other = await getUserBalance(client, { phone: "0712345678" });
+const byEmail = await getUserBalance(client, { email: "customer@example.com" });
 
 // Wallet top-up — fund the currency the user actually holds
 const { methods } = await getDepositPaymentMethods(client);

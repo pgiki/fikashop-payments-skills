@@ -77,9 +77,9 @@ export async function getSubscriptionBalance(client) {
     return client.get(PATHS.balance);
 }
 function userBalanceParams(identity) {
-    if ('userId' in identity)
+    if ("userId" in identity)
         return { user_id: identity.userId };
-    if ('phone' in identity)
+    if ("phone" in identity)
         return { phone: identity.phone };
     return { email: identity.email };
 }
