@@ -21,10 +21,34 @@ export type PaymentMethod = {
   countries?: string[];
 };
 
+/** One currency's amount on a wallet account. */
+export type WalletBalanceEntry = {
+  /** ISO 4217 currency code, e.g. `TZS`. */
+  currency: string;
+  amount: string | number;
+};
+
 export type SubscriptionWalletBalanceResponse = {
   wallet_id: string;
+  /** Balance in the default currency. Use `balances` for the per-currency breakdown. */
   balance: string | number;
+  /** Currency of the scalar `balance`. */
+  currency?: string;
+  /** Balance per currency, default currency first then alphabetical. */
+  balances?: WalletBalanceEntry[];
   payment_methods: PaymentMethod[];
+};
+
+/** Partner-scoped wallet balance for a specific user (`GET …/user-balance/?user_id=`). */
+export type UserBalanceResponse = {
+  user_id: number;
+  partner_id: number;
+  partner_code: string;
+  /** Currency of the scalar `balance` (the default currency, e.g. `TZS`). */
+  currency: string;
+  balance: string | number;
+  /** Balance per currency, default currency first then alphabetical. Amounts are signed. */
+  balances: WalletBalanceEntry[];
 };
 
 export type InvoiceListCardItem = {
@@ -201,7 +225,7 @@ export type SubscriptionMeta = {
 };
 
 export type RecoveryHint = {
-  recommended_action: 'none' | 'wallet_topup' | 'pay_dunning_invoice';
+  recommended_action: "none" | "wallet_topup" | "pay_dunning_invoice";
   dunning_invoice_uuid?: string | null;
 };
 
@@ -284,7 +308,12 @@ export type FeatureBillResponse = {
 };
 
 export type SubscriptionListResponse = {
+  /** Balance in the default currency. Use `balances` for the per-currency breakdown. */
   balance?: string | number;
+  /** Currency of the scalar `balance`. */
+  currency?: string;
+  /** Balance per currency, default currency first then alphabetical. */
+  balances?: WalletBalanceEntry[];
   page?: number;
   is_paginated?: boolean;
   next?: string | null;

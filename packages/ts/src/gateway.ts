@@ -1,4 +1,4 @@
-import type { FikashopClient } from './client.js';
+import type { FikashopClient } from "./client.js";
 import type {
   FeatureAccessResponse,
   FeatureBillResponse,
@@ -13,16 +13,21 @@ import type {
   SubscriptionPlanCatalogItem,
   SubscriptionTransaction,
   SubscriptionWalletBalanceResponse,
+  UserBalanceResponse,
   UserSubscription,
   WalletDepositResponse,
-} from './types.js';
-import { buildCapturePayload, buildDepositPayload, filterDepositMethods } from './payment-fields.js';
-import { formatGatewayFailure } from './errors.js';
-import type { ApiResponse } from 'apisauce';
+} from "./types.js";
+import {
+  buildCapturePayload,
+  buildDepositPayload,
+  filterDepositMethods,
+} from "./payment-fields.js";
+import { formatGatewayFailure } from "./errors.js";
+import type { ApiResponse } from "apisauce";
 
 function idempotencyConfig(idempotencyKey?: string) {
   if (!idempotencyKey?.trim()) return {};
-  return { headers: { 'Idempotency-Key': idempotencyKey.trim() } };
+  return { headers: { "Idempotency-Key": idempotencyKey.trim() } };
 }
 
 function featureQueryParams(opts?: {
@@ -34,7 +39,7 @@ function featureQueryParams(opts?: {
 }) {
   const params: Record<string, string | number> = {};
   if (opts?.subscriptionId) params.subscription_id = opts.subscriptionId;
-  if (opts?.subscribedPartner != null && opts.subscribedPartner !== '') {
+  if (opts?.subscribedPartner != null && opts.subscribedPartner !== "") {
     params.subscribed_partner = opts.subscribedPartner;
   }
   if (opts?.point?.trim()) params.point = opts.point.trim();
@@ -49,10 +54,16 @@ function catalogQueryParams(options?: {
   includes?: string[];
 }) {
   const params: Record<string, string> = {};
-  const tags = options?.tags?.map((t) => t.trim()).filter(Boolean).join(',');
+  const tags = options?.tags
+    ?.map((t) => t.trim())
+    .filter(Boolean)
+    .join(",");
   if (tags) params.tags = tags;
   if (options?.point?.trim()) params.point = options.point.trim();
-  const includes = options?.includes?.map((i) => i.trim()).filter(Boolean).join(',');
+  const includes = options?.includes
+    ?.map((i) => i.trim())
+    .filter(Boolean)
+    .join(",");
   if (includes) params.includes = includes;
   return Object.keys(params).length > 0 ? params : undefined;
 }
@@ -62,32 +73,35 @@ function sleep(ms: number) {
 }
 
 const PATHS = {
-  adminPartners: '/shop/api/admin/partners/',
-  subscriptions: '/subscriptions/api/subscriptions/',
-  balance: '/subscriptions/api/subscriptions/balance/',
-  walletDeposit: '/subscriptions/api/subscriptions/wallet-deposit/',
-  plans: '/subscriptions/api/subscriptions/plans/',
+  adminPartners: "/shop/api/admin/partners/",
+  subscriptions: "/subscriptions/api/subscriptions/",
+  balance: "/subscriptions/api/subscriptions/balance/",
+  userBalance: "/subscriptions/api/subscriptions/user-balance/",
+  walletDeposit: "/subscriptions/api/subscriptions/wallet-deposit/",
+  plans: "/subscriptions/api/subscriptions/plans/",
   plan: (planId: string) =>
     `/subscriptions/api/subscriptions/plans/${encodeURIComponent(planId)}/`,
   usageByPlan: (planId: string) =>
     `/subscriptions/api/subscriptions/usage-by-plan/${encodeURIComponent(planId)}/`,
   usageById: (subscriptionId: string) =>
     `/subscriptions/api/subscriptions/usage-by-id/${encodeURIComponent(subscriptionId)}/`,
-  planOptions: '/subscriptions/api/subscriptions/plan-options/',
-  changePlan: '/subscriptions/api/subscriptions/change-plan/',
-  cancel: '/subscriptions/api/subscriptions/cancel/',
-  transactions: '/subscriptions/api/subscriptions/transactions/',
-  paymentMethods: '/subscriptions/api/subscriptions/payment-methods/',
-  featureAccess: (code: string) => `/subscriptions/api/subscriptions/features/${encodeURIComponent(code)}/access/`,
-  featureBill: (code: string) => `/subscriptions/api/subscriptions/features/${encodeURIComponent(code)}/bill/`,
-  invoices: '/invoices/api/invoices/',
+  planOptions: "/subscriptions/api/subscriptions/plan-options/",
+  changePlan: "/subscriptions/api/subscriptions/change-plan/",
+  cancel: "/subscriptions/api/subscriptions/cancel/",
+  transactions: "/subscriptions/api/subscriptions/transactions/",
+  paymentMethods: "/subscriptions/api/subscriptions/payment-methods/",
+  featureAccess: (code: string) =>
+    `/subscriptions/api/subscriptions/features/${encodeURIComponent(code)}/access/`,
+  featureBill: (code: string) =>
+    `/subscriptions/api/subscriptions/features/${encodeURIComponent(code)}/bill/`,
+  invoices: "/invoices/api/invoices/",
   publicInvoice: (uuid: string) => `/invoices/api/public/${uuid}/`,
   publicPay: (uuid: string) => `/invoices/api/public/${uuid}/pay/`,
   processPayment: (reference: string) => `/payments/process/${reference}/`,
 } as const;
 
 export function parsePartnerList(data: unknown): PartnerSummary[] {
-  if (!data || typeof data !== 'object') return [];
+  if (!data || typeof data !== "object") return [];
   const d = data as { results?: PartnerSummary[] };
   if (Array.isArray(d.results)) return d.results;
   if (Array.isArray(data)) return data as PartnerSummary[];
@@ -95,7 +109,10 @@ export function parsePartnerList(data: unknown): PartnerSummary[] {
 }
 
 /** Businesses linked to the authenticated user — use `code` or `id` for X-Partner-Id. */
-export async function listUserPartners(client: FikashopClient, params?: Record<string, unknown>) {
+export async function listUserPartners(
+  client: FikashopClient,
+  params?: Record<string, unknown>,
+) {
   return client.get(PATHS.adminPartners, params);
 }
 
@@ -103,10 +120,26 @@ export async function getSubscriptionBalance(client: FikashopClient) {
   return client.get<SubscriptionWalletBalanceResponse>(PATHS.balance);
 }
 
+/**
+ * Partner-scoped wallet balance per currency for another user.
+ *
+ * Partner context is **required** — call `client.configurePartner(...)` first. A missing
+ * partner is a `400` and an unknown ref a `404`; `403` means the caller may not read that
+ * user (only self, `is_staff`/`is_superuser`, or partner staff reading a linked user).
+ */
+export async function getUserBalance(client: FikashopClient, userId: number) {
+  return client.get<UserBalanceResponse>(PATHS.userBalance, {
+    user_id: userId,
+  });
+}
+
 export async function getDepositPaymentMethods(client: FikashopClient) {
   const resp = await getSubscriptionBalance(client);
   if (!resp.ok || !resp.data) return { response: resp, methods: [] as const };
-  return { response: resp, methods: filterDepositMethods(resp.data.payment_methods) };
+  return {
+    response: resp,
+    methods: filterDepositMethods(resp.data.payment_methods),
+  };
 }
 
 export async function walletDeposit(
@@ -132,7 +165,10 @@ export async function listSubscriptions(
   options?: { tags?: string[]; point?: string; page?: number; size?: number },
 ) {
   const params: Record<string, string | number> = {};
-  const tags = options?.tags?.map((t) => t.trim()).filter(Boolean).join(',');
+  const tags = options?.tags
+    ?.map((t) => t.trim())
+    .filter(Boolean)
+    .join(",");
   if (tags) params.tags = tags;
   if (options?.point?.trim()) params.point = options.point.trim();
   if (options?.page != null) params.page = options.page;
@@ -175,7 +211,10 @@ export async function getUsageByPlan(
   );
 }
 
-export async function getUsageById(client: FikashopClient, subscriptionId: string) {
+export async function getUsageById(
+  client: FikashopClient,
+  subscriptionId: string,
+) {
   return client.get<UserSubscription>(PATHS.usageById(subscriptionId));
 }
 
@@ -201,12 +240,17 @@ export async function subscribeToPlan(
   },
 ) {
   const body: Record<string, unknown> = { plan_cost_slug: planCostSlug };
-  if (opts?.subscribedPartner != null && opts.subscribedPartner !== '') {
+  if (opts?.subscribedPartner != null && opts.subscribedPartner !== "") {
     body.subscribed_partner = opts.subscribedPartner;
   }
   if (opts?.clientReference) body.client_reference = opts.clientReference;
-  if (opts?.metadata && Object.keys(opts.metadata).length > 0) body.metadata = opts.metadata;
-  return client.post<UserSubscription>(PATHS.subscriptions, body, idempotencyConfig(opts?.idempotencyKey));
+  if (opts?.metadata && Object.keys(opts.metadata).length > 0)
+    body.metadata = opts.metadata;
+  return client.post<UserSubscription>(
+    PATHS.subscriptions,
+    body,
+    idempotencyConfig(opts?.idempotencyKey),
+  );
 }
 
 /**
@@ -219,32 +263,43 @@ export async function changePlan(
   input: {
     subscriptionId: string;
     targetPlanCostSlug: string;
-    effectiveMode?: 'immediate' | 'next_cycle';
+    effectiveMode?: "immediate" | "next_cycle";
   },
 ) {
   return client.post<UserSubscription>(PATHS.changePlan, {
     subscription_id: input.subscriptionId,
     target_plan_cost_slug: input.targetPlanCostSlug,
-    effective_mode: input.effectiveMode ?? 'immediate',
+    effective_mode: input.effectiveMode ?? "immediate",
   });
 }
 
-export async function cancelSubscription(client: FikashopClient, subscriptionId: string) {
-  return client.post<UserSubscription>(PATHS.cancel, { subscription_id: subscriptionId });
+export async function cancelSubscription(
+  client: FikashopClient,
+  subscriptionId: string,
+) {
+  return client.post<UserSubscription>(PATHS.cancel, {
+    subscription_id: subscriptionId,
+  });
 }
 
 export async function getSubscriptionTransactions(
   client: FikashopClient,
   params?: { page?: number; size?: number },
 ) {
-  return client.get<PaginatedResults<SubscriptionTransaction>>(PATHS.transactions, params);
+  return client.get<PaginatedResults<SubscriptionTransaction>>(
+    PATHS.transactions,
+    params,
+  );
 }
 
 export async function getSubscriptionPaymentMethods(
   client: FikashopClient,
   params?: { exclude_codes?: string },
 ) {
-  return client.get<import('./types.js').PaymentMethod[]>(PATHS.paymentMethods, params);
+  return client.get<import("./types.js").PaymentMethod[]>(
+    PATHS.paymentMethods,
+    params,
+  );
 }
 
 export async function checkFeatureAccess(
@@ -281,11 +336,17 @@ export async function billFeatureUsage(
   return client.post<FeatureBillResponse>(
     PATHS.featureBill(featureCode),
     { quantity: opts?.quantity ?? 1 },
-    { ...idempotencyConfig(opts?.idempotencyKey), ...(params ? { params } : {}) },
+    {
+      ...idempotencyConfig(opts?.idempotencyKey),
+      ...(params ? { params } : {}),
+    },
   );
 }
 
-export async function listInvoices(client: FikashopClient, params?: Record<string, unknown>) {
+export async function listInvoices(
+  client: FikashopClient,
+  params?: Record<string, unknown>,
+) {
   return client.get(PATHS.invoices, params);
 }
 
@@ -293,7 +354,11 @@ export async function getPublicInvoice(client: FikashopClient, uuid: string) {
   return client.get<PublicInvoice>(PATHS.publicInvoice(uuid));
 }
 
-export async function initiatePublicPay(client: FikashopClient, uuid: string, paymentMethodCode: string) {
+export async function initiatePublicPay(
+  client: FikashopClient,
+  uuid: string,
+  paymentMethodCode: string,
+) {
   return client.post<PublicPayInitResponse>(PATHS.publicPay(uuid), {
     payment_method_code: paymentMethodCode,
   });
@@ -355,12 +420,12 @@ export async function waitForInvoicePaid(
   invoiceUuid: string,
   opts?: { maxAttempts?: number; intervalMs?: number },
 ): Promise<PublicInvoice | null> {
-  const paidStatuses = new Set(['paid', 'settled', 'success', 'confirmed']);
+  const paidStatuses = new Set(["paid", "settled", "success", "confirmed"]);
   const maxAttempts = opts?.maxAttempts ?? 12;
   const intervalMs = opts?.intervalMs ?? 5000;
   for (let i = 0; i < maxAttempts; i += 1) {
     const resp = await getPublicInvoice(client, invoiceUuid);
-    const status = String(resp.data?.status ?? '')
+    const status = String(resp.data?.status ?? "")
       .trim()
       .toLowerCase();
     if (resp.ok && paidStatuses.has(status)) {
@@ -374,9 +439,9 @@ export async function waitForInvoicePaid(
 /** Human-readable message when a gateway helper response is not ok. */
 export function describeGatewayFailure(
   resp: ApiResponse<unknown>,
-  context?: import('./errors.js').GatewayFailureContext,
+  context?: import("./errors.js").GatewayFailureContext,
 ): string {
-  return formatGatewayFailure(resp, context ?? 'auto');
+  return formatGatewayFailure(resp, context ?? "auto");
 }
 
 export { PATHS as FikashopGatewayPaths };

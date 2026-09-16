@@ -1,15 +1,15 @@
-import { buildCapturePayload, buildDepositPayload, filterDepositMethods } from './payment-fields.js';
-import { formatGatewayFailure } from './errors.js';
+import { buildCapturePayload, buildDepositPayload, filterDepositMethods, } from "./payment-fields.js";
+import { formatGatewayFailure } from "./errors.js";
 function idempotencyConfig(idempotencyKey) {
     if (!idempotencyKey?.trim())
         return {};
-    return { headers: { 'Idempotency-Key': idempotencyKey.trim() } };
+    return { headers: { "Idempotency-Key": idempotencyKey.trim() } };
 }
 function featureQueryParams(opts) {
     const params = {};
     if (opts?.subscriptionId)
         params.subscription_id = opts.subscriptionId;
-    if (opts?.subscribedPartner != null && opts.subscribedPartner !== '') {
+    if (opts?.subscribedPartner != null && opts.subscribedPartner !== "") {
         params.subscribed_partner = opts.subscribedPartner;
     }
     if (opts?.point?.trim())
@@ -18,12 +18,18 @@ function featureQueryParams(opts) {
 }
 function catalogQueryParams(options) {
     const params = {};
-    const tags = options?.tags?.map((t) => t.trim()).filter(Boolean).join(',');
+    const tags = options?.tags
+        ?.map((t) => t.trim())
+        .filter(Boolean)
+        .join(",");
     if (tags)
         params.tags = tags;
     if (options?.point?.trim())
         params.point = options.point.trim();
-    const includes = options?.includes?.map((i) => i.trim()).filter(Boolean).join(',');
+    const includes = options?.includes
+        ?.map((i) => i.trim())
+        .filter(Boolean)
+        .join(",");
     if (includes)
         params.includes = includes;
     return Object.keys(params).length > 0 ? params : undefined;
@@ -32,28 +38,29 @@ function sleep(ms) {
     return new Promise((resolve) => setTimeout(resolve, ms));
 }
 const PATHS = {
-    adminPartners: '/shop/api/admin/partners/',
-    subscriptions: '/subscriptions/api/subscriptions/',
-    balance: '/subscriptions/api/subscriptions/balance/',
-    walletDeposit: '/subscriptions/api/subscriptions/wallet-deposit/',
-    plans: '/subscriptions/api/subscriptions/plans/',
+    adminPartners: "/shop/api/admin/partners/",
+    subscriptions: "/subscriptions/api/subscriptions/",
+    balance: "/subscriptions/api/subscriptions/balance/",
+    userBalance: "/subscriptions/api/subscriptions/user-balance/",
+    walletDeposit: "/subscriptions/api/subscriptions/wallet-deposit/",
+    plans: "/subscriptions/api/subscriptions/plans/",
     plan: (planId) => `/subscriptions/api/subscriptions/plans/${encodeURIComponent(planId)}/`,
     usageByPlan: (planId) => `/subscriptions/api/subscriptions/usage-by-plan/${encodeURIComponent(planId)}/`,
     usageById: (subscriptionId) => `/subscriptions/api/subscriptions/usage-by-id/${encodeURIComponent(subscriptionId)}/`,
-    planOptions: '/subscriptions/api/subscriptions/plan-options/',
-    changePlan: '/subscriptions/api/subscriptions/change-plan/',
-    cancel: '/subscriptions/api/subscriptions/cancel/',
-    transactions: '/subscriptions/api/subscriptions/transactions/',
-    paymentMethods: '/subscriptions/api/subscriptions/payment-methods/',
+    planOptions: "/subscriptions/api/subscriptions/plan-options/",
+    changePlan: "/subscriptions/api/subscriptions/change-plan/",
+    cancel: "/subscriptions/api/subscriptions/cancel/",
+    transactions: "/subscriptions/api/subscriptions/transactions/",
+    paymentMethods: "/subscriptions/api/subscriptions/payment-methods/",
     featureAccess: (code) => `/subscriptions/api/subscriptions/features/${encodeURIComponent(code)}/access/`,
     featureBill: (code) => `/subscriptions/api/subscriptions/features/${encodeURIComponent(code)}/bill/`,
-    invoices: '/invoices/api/invoices/',
+    invoices: "/invoices/api/invoices/",
     publicInvoice: (uuid) => `/invoices/api/public/${uuid}/`,
     publicPay: (uuid) => `/invoices/api/public/${uuid}/pay/`,
     processPayment: (reference) => `/payments/process/${reference}/`,
 };
 export function parsePartnerList(data) {
-    if (!data || typeof data !== 'object')
+    if (!data || typeof data !== "object")
         return [];
     const d = data;
     if (Array.isArray(d.results))
@@ -69,18 +76,36 @@ export async function listUserPartners(client, params) {
 export async function getSubscriptionBalance(client) {
     return client.get(PATHS.balance);
 }
+/**
+ * Partner-scoped wallet balance per currency for another user.
+ *
+ * Partner context is **required** — call `client.configurePartner(...)` first. A missing
+ * partner is a `400` and an unknown ref a `404`; `403` means the caller may not read that
+ * user (only self, `is_staff`/`is_superuser`, or partner staff reading a linked user).
+ */
+export async function getUserBalance(client, userId) {
+    return client.get(PATHS.userBalance, {
+        user_id: userId,
+    });
+}
 export async function getDepositPaymentMethods(client) {
     const resp = await getSubscriptionBalance(client);
     if (!resp.ok || !resp.data)
         return { response: resp, methods: [] };
-    return { response: resp, methods: filterDepositMethods(resp.data.payment_methods) };
+    return {
+        response: resp,
+        methods: filterDepositMethods(resp.data.payment_methods),
+    };
 }
 export async function walletDeposit(client, input) {
     return client.post(PATHS.walletDeposit, buildDepositPayload(input), idempotencyConfig(input.idempotencyKey));
 }
 export async function listSubscriptions(client, options) {
     const params = {};
-    const tags = options?.tags?.map((t) => t.trim()).filter(Boolean).join(',');
+    const tags = options?.tags
+        ?.map((t) => t.trim())
+        .filter(Boolean)
+        .join(",");
     if (tags)
         params.tags = tags;
     if (options?.point?.trim())
@@ -111,7 +136,7 @@ export async function getPlanOptions(client, subscriptionId, options) {
 }
 export async function subscribeToPlan(client, planCostSlug, opts) {
     const body = { plan_cost_slug: planCostSlug };
-    if (opts?.subscribedPartner != null && opts.subscribedPartner !== '') {
+    if (opts?.subscribedPartner != null && opts.subscribedPartner !== "") {
         body.subscribed_partner = opts.subscribedPartner;
     }
     if (opts?.clientReference)
@@ -129,11 +154,13 @@ export async function changePlan(client, input) {
     return client.post(PATHS.changePlan, {
         subscription_id: input.subscriptionId,
         target_plan_cost_slug: input.targetPlanCostSlug,
-        effective_mode: input.effectiveMode ?? 'immediate',
+        effective_mode: input.effectiveMode ?? "immediate",
     });
 }
 export async function cancelSubscription(client, subscriptionId) {
-    return client.post(PATHS.cancel, { subscription_id: subscriptionId });
+    return client.post(PATHS.cancel, {
+        subscription_id: subscriptionId,
+    });
 }
 export async function getSubscriptionTransactions(client, params) {
     return client.get(PATHS.transactions, params);
@@ -146,7 +173,10 @@ export async function checkFeatureAccess(client, featureCode, opts) {
 }
 export async function billFeatureUsage(client, featureCode, opts) {
     const params = featureQueryParams(opts);
-    return client.post(PATHS.featureBill(featureCode), { quantity: opts?.quantity ?? 1 }, { ...idempotencyConfig(opts?.idempotencyKey), ...(params ? { params } : {}) });
+    return client.post(PATHS.featureBill(featureCode), { quantity: opts?.quantity ?? 1 }, {
+        ...idempotencyConfig(opts?.idempotencyKey),
+        ...(params ? { params } : {}),
+    });
 }
 export async function listInvoices(client, params) {
     return client.get(PATHS.invoices, params);
@@ -197,12 +227,12 @@ export async function waitForWalletCredit(client, minBalance, opts) {
 }
 /** Poll public invoice until paid (Checkout B confirmation or dunning recovery). */
 export async function waitForInvoicePaid(client, invoiceUuid, opts) {
-    const paidStatuses = new Set(['paid', 'settled', 'success', 'confirmed']);
+    const paidStatuses = new Set(["paid", "settled", "success", "confirmed"]);
     const maxAttempts = opts?.maxAttempts ?? 12;
     const intervalMs = opts?.intervalMs ?? 5000;
     for (let i = 0; i < maxAttempts; i += 1) {
         const resp = await getPublicInvoice(client, invoiceUuid);
-        const status = String(resp.data?.status ?? '')
+        const status = String(resp.data?.status ?? "")
             .trim()
             .toLowerCase();
         if (resp.ok && paidStatuses.has(status)) {
@@ -215,7 +245,7 @@ export async function waitForInvoicePaid(client, invoiceUuid, opts) {
 }
 /** Human-readable message when a gateway helper response is not ok. */
 export function describeGatewayFailure(resp, context) {
-    return formatGatewayFailure(resp, context ?? 'auto');
+    return formatGatewayFailure(resp, context ?? "auto");
 }
 export { PATHS as FikashopGatewayPaths };
 //# sourceMappingURL=gateway.js.map

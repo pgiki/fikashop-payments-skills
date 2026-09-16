@@ -1,10 +1,11 @@
-import type { FikashopClient } from './client.js';
-import type { FeatureAccessResponse, FeatureBillResponse, PaginatedResults, PartnerSummary, PaymentCaptureResponse, PaymentFormValues, PlanCostSummary, PublicInvoice, PublicPayInitResponse, SubscriptionListResponse, SubscriptionPlanCatalogItem, SubscriptionTransaction, SubscriptionWalletBalanceResponse, UserSubscription, WalletDepositResponse } from './types.js';
-import type { ApiResponse } from 'apisauce';
+import type { FikashopClient } from "./client.js";
+import type { FeatureAccessResponse, FeatureBillResponse, PaginatedResults, PartnerSummary, PaymentCaptureResponse, PaymentFormValues, PlanCostSummary, PublicInvoice, PublicPayInitResponse, SubscriptionListResponse, SubscriptionPlanCatalogItem, SubscriptionTransaction, SubscriptionWalletBalanceResponse, UserBalanceResponse, UserSubscription, WalletDepositResponse } from "./types.js";
+import type { ApiResponse } from "apisauce";
 declare const PATHS: {
     readonly adminPartners: "/shop/api/admin/partners/";
     readonly subscriptions: "/subscriptions/api/subscriptions/";
     readonly balance: "/subscriptions/api/subscriptions/balance/";
+    readonly userBalance: "/subscriptions/api/subscriptions/user-balance/";
     readonly walletDeposit: "/subscriptions/api/subscriptions/wallet-deposit/";
     readonly plans: "/subscriptions/api/subscriptions/plans/";
     readonly plan: (planId: string) => string;
@@ -26,6 +27,14 @@ export declare function parsePartnerList(data: unknown): PartnerSummary[];
 /** Businesses linked to the authenticated user — use `code` or `id` for X-Partner-Id. */
 export declare function listUserPartners(client: FikashopClient, params?: Record<string, unknown>): Promise<ApiResponse<unknown, unknown>>;
 export declare function getSubscriptionBalance(client: FikashopClient): Promise<ApiResponse<SubscriptionWalletBalanceResponse, SubscriptionWalletBalanceResponse>>;
+/**
+ * Partner-scoped wallet balance per currency for another user.
+ *
+ * Partner context is **required** — call `client.configurePartner(...)` first. A missing
+ * partner is a `400` and an unknown ref a `404`; `403` means the caller may not read that
+ * user (only self, `is_staff`/`is_superuser`, or partner staff reading a linked user).
+ */
+export declare function getUserBalance(client: FikashopClient, userId: number): Promise<ApiResponse<UserBalanceResponse, UserBalanceResponse>>;
 export declare function getDepositPaymentMethods(client: FikashopClient): Promise<{
     response: ApiResponse<SubscriptionWalletBalanceResponse, SubscriptionWalletBalanceResponse>;
     methods: readonly [];
@@ -78,7 +87,7 @@ export declare function subscribeToPlan(client: FikashopClient, planCostSlug: st
 export declare function changePlan(client: FikashopClient, input: {
     subscriptionId: string;
     targetPlanCostSlug: string;
-    effectiveMode?: 'immediate' | 'next_cycle';
+    effectiveMode?: "immediate" | "next_cycle";
 }): Promise<ApiResponse<UserSubscription, UserSubscription>>;
 export declare function cancelSubscription(client: FikashopClient, subscriptionId: string): Promise<ApiResponse<UserSubscription, UserSubscription>>;
 export declare function getSubscriptionTransactions(client: FikashopClient, params?: {
@@ -125,6 +134,6 @@ export declare function waitForInvoicePaid(client: FikashopClient, invoiceUuid: 
     intervalMs?: number;
 }): Promise<PublicInvoice | null>;
 /** Human-readable message when a gateway helper response is not ok. */
-export declare function describeGatewayFailure(resp: ApiResponse<unknown>, context?: import('./errors.js').GatewayFailureContext): string;
+export declare function describeGatewayFailure(resp: ApiResponse<unknown>, context?: import("./errors.js").GatewayFailureContext): string;
 export { PATHS as FikashopGatewayPaths };
 //# sourceMappingURL=gateway.d.ts.map
