@@ -11,6 +11,8 @@
       "partner_id": 42,
       "active": false,
       "cancelled": true,
+      "cancel_at_period_end": false,
+      "canceled_at": "2026-06-14T11:00:00+00:00",
       "plan_cost_slug": "pro-monthly",
       "client_reference": "order-8842",
       "metadata": {},

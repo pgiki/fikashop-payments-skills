@@ -11,6 +11,8 @@
       "partner_id": 42,
       "active": true,
       "cancelled": false,
+      "cancel_at_period_end": false,
+      "canceled_at": "",
       "plan_cost_slug": "pro-monthly",
       "client_reference": "order-8842",
       "metadata": { "cart_id": "cart-99" },

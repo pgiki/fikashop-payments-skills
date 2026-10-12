@@ -247,7 +247,8 @@ Canonical status lists: [status-map.json](status-map.json)
 | GET    | `/subscriptions/api/subscriptions/plan-options/`                  | Alternate costs — [plan-options-all.json](fixtures/plan-options-all.json)                                                                  |
 | POST   | `/subscriptions/api/subscriptions/`                               | Subscribe — [subscribe-response.json](fixtures/subscribe-response.json)                                                                    |
 | POST   | `/subscriptions/api/subscriptions/change-plan/`                   | Change plan — [change-plan-response.json](fixtures/change-plan-response.json)                                                              |
-| POST   | `/subscriptions/api/subscriptions/cancel/`                        | Cancel — [cancel-response.json](fixtures/cancel-response.json)                                                                             |
+| POST   | `/subscriptions/api/subscriptions/cancel/`                        | Cancel (`at_period_end` keeps access; `immediate` revokes) — [cancel-response.json](fixtures/cancel-response.json) |
+| POST   | `/subscriptions/api/subscriptions/reactivate/`                    | Undo scheduled cancel — [reactivate-response.json](fixtures/reactivate-response.json) |
 | GET    | `/subscriptions/api/subscriptions/transactions/`                  | History — [subscription-transactions-page1.json](fixtures/subscription-transactions-page1.json)                                            |
 | GET    | `/subscriptions/api/subscriptions/balance/`                       | Balance + methods — [balance-with-methods.json](fixtures/balance-with-methods.json)                                                        |
 | GET    | `/subscriptions/api/subscriptions/user-balance/`                  | Balance by `?user_id=` / `?phone=` / `?email=` (partner required) — [user-balance.json](fixtures/user-balance.json)                        |
@@ -358,8 +359,8 @@ Fixture: [fixtures/webhook-event-envelope.json](fixtures/webhook-event-envelope.
 | `invoice.settlement_posted` / `invoice.settlement_failed`   | Ledger settlement                                    |
 | `wallet.deposit_succeeded`                                  | Wallet top-up credited                               |
 | `subscription.created`                                      | User subscribed via API                              |
-| `subscription.updated`                                      | Activation, renewal, dunning recovery, billing state |
-| `subscription.cancelled`                                    | Subscription cancelled                               |
+| `subscription.updated`                                      | Activation, renewal, dunning recovery, billing state, scheduled cancel / reactivate |
+| `subscription.cancelled`                                    | Final cancel at period end (or immediate) |
 | `subscription.past_due`                                     | Dunning invoice or failed renewal                    |
 
 Correlate invoice pay via `data.object.external_invoice_reference` or `invoice_uuid`. Wallet top-ups use `intent: wallet-deposit`. Subscriptions expose `client_reference` and `recovery` hints on API responses.

@@ -244,6 +244,8 @@ export type SubscriptionWebhookPayload = {
   partner_id?: number | null;
   active?: boolean;
   cancelled?: boolean;
+  cancel_at_period_end?: boolean;
+  canceled_at?: string | null;
   plan_cost_slug?: string;
   client_reference?: string;
   metadata?: Record<string, unknown>;
@@ -261,6 +263,10 @@ export type UserSubscription = {
   pending_plan_cost_slug?: string | null;
   active?: boolean;
   cancelled?: boolean;
+  cancel_at_period_end?: boolean;
+  canceled_at?: string | null;
+  cancel_reason?: string;
+  effective_period_end?: string | null;
   billing_retry_exhausted?: boolean;
   payment_failure_notify_count?: number;
   date_billing_start?: string;

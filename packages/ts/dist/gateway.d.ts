@@ -14,6 +14,7 @@ declare const PATHS: {
     readonly planOptions: "/subscriptions/api/subscriptions/plan-options/";
     readonly changePlan: "/subscriptions/api/subscriptions/change-plan/";
     readonly cancel: "/subscriptions/api/subscriptions/cancel/";
+    readonly reactivate: "/subscriptions/api/subscriptions/reactivate/";
     readonly transactions: "/subscriptions/api/subscriptions/transactions/";
     readonly paymentMethods: "/subscriptions/api/subscriptions/payment-methods/";
     readonly featureAccess: (code: string) => string;
@@ -92,7 +93,12 @@ export declare function changePlan(client: FikashopClient, input: {
     targetPlanCostSlug: string;
     effectiveMode?: "immediate" | "next_cycle";
 }): Promise<ApiResponse<UserSubscription, UserSubscription>>;
-export declare function cancelSubscription(client: FikashopClient, subscriptionId: string): Promise<ApiResponse<UserSubscription, UserSubscription>>;
+export declare function cancelSubscription(client: FikashopClient, subscriptionId: string, mode?: "at_period_end" | "immediate"): Promise<ApiResponse<UserSubscription, UserSubscription>>;
+/**
+ * Undo a scheduled (`cancel_at_period_end`) cancellation before the period
+ * ends. Renewals resume; access continues uninterrupted.
+ */
+export declare function reactivateSubscription(client: FikashopClient, subscriptionId: string): Promise<ApiResponse<UserSubscription, UserSubscription>>;
 export declare function getSubscriptionTransactions(client: FikashopClient, params?: {
     page?: number;
     size?: number;

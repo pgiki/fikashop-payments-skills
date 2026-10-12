@@ -89,6 +89,7 @@ const PATHS = {
   planOptions: "/subscriptions/api/subscriptions/plan-options/",
   changePlan: "/subscriptions/api/subscriptions/change-plan/",
   cancel: "/subscriptions/api/subscriptions/cancel/",
+  reactivate: "/subscriptions/api/subscriptions/reactivate/",
   transactions: "/subscriptions/api/subscriptions/transactions/",
   paymentMethods: "/subscriptions/api/subscriptions/payment-methods/",
   featureAccess: (code: string) =>
@@ -292,8 +293,23 @@ export async function changePlan(
 export async function cancelSubscription(
   client: FikashopClient,
   subscriptionId: string,
+  mode: "at_period_end" | "immediate" = "at_period_end",
 ) {
   return client.post<UserSubscription>(PATHS.cancel, {
+    subscription_id: subscriptionId,
+    mode,
+  });
+}
+
+/**
+ * Undo a scheduled (`cancel_at_period_end`) cancellation before the period
+ * ends. Renewals resume; access continues uninterrupted.
+ */
+export async function reactivateSubscription(
+  client: FikashopClient,
+  subscriptionId: string,
+) {
+  return client.post<UserSubscription>(PATHS.reactivate, {
     subscription_id: subscriptionId,
   });
 }

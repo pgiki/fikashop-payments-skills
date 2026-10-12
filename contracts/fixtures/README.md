@@ -57,8 +57,11 @@ Staff token + `X-Partner-Id`. See [ADMIN-SUBSCRIPTIONS.md](../ADMIN-SUBSCRIPTION
 | [change-plan-response.json](change-plan-response.json)                                 | `POST …/change-plan/` (200)                          | Updated subscription after immediate change.                                                |
 | [change-plan-next-cycle-response.json](change-plan-next-cycle-response.json)           | `POST …/change-plan/` (200, `next_cycle`)            | Current plan unchanged; `pending_plan_cost_*` set.                                          |
 | [change-plan-error-insufficient-funds.json](change-plan-error-insufficient-funds.json) | `POST …/change-plan/` (402)                          | Immediate change underfunded — plan unchanged.                                              |
-| [cancel-request.json](cancel-request.json)                                             | POST body                                            | `{ "subscription_id": "uuid" }`.                                                            |
-| [cancel-response.json](cancel-response.json)                                           | `POST …/cancel/` (200)                               | `cancelled: true`, `active: false`.                                                         |
+| [cancel-request.json](cancel-request.json)                                             | POST body                                            | `{ "subscription_id": "uuid", "mode": "at_period_end" }` (`mode` optional, default `at_period_end`; `immediate` revokes now). |
+| [cancel-response.json](cancel-response.json)                                           | `POST …/cancel/` (200)                               | Scheduled cancel: `active: true`, `cancel_at_period_end: true`, access until `effective_period_end`. |
+| [cancel-response-immediate.json](cancel-response-immediate.json)                       | `POST …/cancel/` (200, `mode: immediate`)            | `cancelled: true`, `active: false` — access revoked now. |
+| [reactivate-request.json](reactivate-request.json)                                     | POST body                                            | `{ "subscription_id": "uuid" }`. |
+| [reactivate-response.json](reactivate-response.json)                                   | `POST …/reactivate/` (200)                           | Schedule cleared, renewals resume. |
 
 ## Subscriptions — feature access & bill
 
@@ -114,8 +117,8 @@ Staff token + `X-Partner-Id`. See [ADMIN-SUBSCRIPTIONS.md](../ADMIN-SUBSCRIPTION
 | [webhook-event-envelope.json](webhook-event-envelope.json)                                       | Inbound POST (unified) | Stripe-style envelope; verify `Fikashop-Signature`.              |
 | [webhook-wallet-deposit-succeeded.json](webhook-wallet-deposit-succeeded.json)                   | Inbound POST (unified) | `wallet.deposit_succeeded` — subscription recovery Path A.       |
 | [webhook-subscription-created.json](webhook-subscription-created.json)                           | Inbound POST (unified) | `subscription.created` after subscribe.                          |
-| [webhook-subscription-updated.json](webhook-subscription-updated.json)                           | Inbound POST (unified) | Activation, renewal, dunning recovery.                           |
-| [webhook-subscription-cancelled.json](webhook-subscription-cancelled.json)                       | Inbound POST (unified) | User/system cancel.                                              |
+| [webhook-subscription-updated.json](webhook-subscription-updated.json)                           | Inbound POST (unified) | Activation, renewal, dunning recovery, scheduled cancel / reactivate. |
+| [webhook-subscription-cancelled.json](webhook-subscription-cancelled.json)                       | Inbound POST (unified) | Final cancel at period end (or immediate). Payload carries `cancel_at_period_end` / `canceled_at`. |
 | [webhook-subscription-past-due.json](webhook-subscription-past-due.json)                         | Inbound POST (unified) | Dunning invoice / failed renewal.                                |
 | [webhook-payment-succeeded.json](webhook-payment-succeeded.json)                                 | Inbound POST (unified) | Gateway payment confirmed.                                       |
 | [webhook-payment-failed.json](webhook-payment-failed.json)                                       | Inbound POST (unified) | Gateway payment error.                                           |

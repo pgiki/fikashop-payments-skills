@@ -26,7 +26,7 @@ Bearer + X-Partner-Id
   → GET …/usage-by-plan/{plan_id}/   or …/usage-by-id/{subscription_id}/
   → GET …/features/{code}/access/   gate UI / API (?point= optional)
   → POST …/features/{code}/bill/    record usage (+ wallet if overage)
-  → (optional) POST …/change-plan/ or …/cancel/
+  → (optional) POST …/change-plan/ or …/cancel/ (access kept until period end; undo via …/reactivate/)
 ```
 
 ---
@@ -101,7 +101,8 @@ Base path: **`/subscriptions/api/subscriptions/`**
 | POST   | `/features/{code}/bill/`          | Bill feature usage; optional `?point=`                                              | [feature-bill-response.json](fixtures/feature-bill-response.json)                                                                                                                                                                                               |
 | GET    | `/plan-options/`                  | Alternate costs; optional `?point=`                                                 | [plan-options-all.json](fixtures/plan-options-all.json)                                                                                                                                                                                                         |
 | POST   | `/change-plan/`                   | Change billing option (`immediate` prorate / `next_cycle` pending)                  | [change-plan-response.json](fixtures/change-plan-response.json), [change-plan-next-cycle-response.json](fixtures/change-plan-next-cycle-response.json)                                                                                                          |
-| POST   | `/cancel/`                        | Cancel subscription                                                                 | [cancel-response.json](fixtures/cancel-response.json)                                                                                                                                                                                                           |
+| POST   | `/cancel/`                        | Cancel subscription (`mode`: `at_period_end` keeps access until `effective_period_end`; `immediate` revokes now) | [cancel-response.json](fixtures/cancel-response.json), [cancel-response-immediate.json](fixtures/cancel-response-immediate.json) |
+| POST   | `/reactivate/`                    | Undo a scheduled cancellation before period end (renewals resume) | [reactivate-response.json](fixtures/reactivate-response.json) |
 | GET    | `/balance/`                       | Balance + deposit methods                                                           | [balance-with-methods.json](fixtures/balance-with-methods.json)                                                                                                                                                                                                 |
 | GET    | `/user-balance/`                  | Balance for another user (`?user_id=` / `?phone=` / `?email=`, partner required)    | [user-balance.json](fixtures/user-balance.json)                                                                                                                                                                                                                 |
 | GET    | `/payment-methods/`               | Deposit methods only                                                                | [subscription-payment-methods.json](fixtures/subscription-payment-methods.json)                                                                                                                                                                                 |
@@ -121,7 +122,7 @@ Base path: **`/subscriptions/api/subscriptions/`**
 | Unpaid invoice | `unpaid_invoices[]`              | Pay via public invoice API or top up wallet                   |
 | Billing retry  | `billing_retry_exhausted`        | When `true`, Celery skips auto-billing until payment succeeds |
 
-`GET …/` returns **all** subscriptions (active, inactive, cancelled). Filter client-side on `active`, `cancelled`, and `unpaid_invoices`.
+`GET …/` returns **all** subscriptions (active, inactive, cancelled). Filter client-side on `active`, `cancelled`, and `unpaid_invoices`. A scheduled cancellation (`cancel_at_period_end: true`, `cancelled: false`) stays in the active set with access until `effective_period_end` — show it as “Scheduled”, not cancelled.
 
 ---
 
@@ -294,16 +295,41 @@ Content-Type: application/json
 
 ## 6. Cancel subscription
 
+Default `mode: "at_period_end"` (Stripe-style): the subscription stays
+`active: true, cancelled: false` with `cancel_at_period_end: true`; the user
+keeps access until `effective_period_end` (`date_billing_end` or
+`date_billing_next`), future renewals stop, and open renewal/dunning invoices
+are voided. No prorated refund. Provisioned services (email/VPS) are suspended
+only when the period actually ends. `mode: "immediate"` revokes access now
+(see [cancel-response-immediate.json](fixtures/cancel-response-immediate.json)).
+
 **Request:** [cancel-request.json](fixtures/cancel-request.json)
 
 ```http
 POST /subscriptions/api/subscriptions/cancel/
 Content-Type: application/json
 
-{ "subscription_id": "f47ac10b-58cc-4372-a567-0e02b2c3d479" }
+{ "subscription_id": "f47ac10b-58cc-4372-a567-0e02b2c3d479", "mode": "at_period_end" }
 ```
 
 **Response `200`:** [cancel-response.json](fixtures/cancel-response.json) — pending dunning invoices are voided.
+
+### 6b. Undo a scheduled cancellation
+
+Before the period ends, `POST …/reactivate/` clears `cancel_at_period_end` and
+renewals resume — access continues uninterrupted. Idempotent (no-op unless a
+schedule is pending).
+
+**Request:** [reactivate-request.json](fixtures/reactivate-request.json)
+
+```http
+POST /subscriptions/api/subscriptions/reactivate/
+Content-Type: application/json
+
+{ "subscription_id": "f47ac10b-58cc-4372-a567-0e02b2c3d479" }
+```
+
+**Response `200`:** [reactivate-response.json](fixtures/reactivate-response.json).
 
 ---
 
@@ -528,6 +554,7 @@ import {
   subscribeToPlan,
   changePlan,
   cancelSubscription,
+  reactivateSubscription,
   getPlanOptions,
   getSubscriptionTransactions,
   checkFeatureAccess,

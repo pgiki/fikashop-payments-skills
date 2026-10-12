@@ -50,6 +50,7 @@ const PATHS = {
     planOptions: "/subscriptions/api/subscriptions/plan-options/",
     changePlan: "/subscriptions/api/subscriptions/change-plan/",
     cancel: "/subscriptions/api/subscriptions/cancel/",
+    reactivate: "/subscriptions/api/subscriptions/reactivate/",
     transactions: "/subscriptions/api/subscriptions/transactions/",
     paymentMethods: "/subscriptions/api/subscriptions/payment-methods/",
     featureAccess: (code) => `/subscriptions/api/subscriptions/features/${encodeURIComponent(code)}/access/`,
@@ -165,8 +166,18 @@ export async function changePlan(client, input) {
         effective_mode: input.effectiveMode ?? "immediate",
     });
 }
-export async function cancelSubscription(client, subscriptionId) {
+export async function cancelSubscription(client, subscriptionId, mode = "at_period_end") {
     return client.post(PATHS.cancel, {
+        subscription_id: subscriptionId,
+        mode,
+    });
+}
+/**
+ * Undo a scheduled (`cancel_at_period_end`) cancellation before the period
+ * ends. Renewals resume; access continues uninterrupted.
+ */
+export async function reactivateSubscription(client, subscriptionId) {
+    return client.post(PATHS.reactivate, {
         subscription_id: subscriptionId,
     });
 }

@@ -1,11 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
   FikashopGatewayPaths,
+  cancelSubscription,
   checkFeatureAccess,
   billFeatureUsage,
   getSubscriptionPlans,
   getUserBalance,
   parsePartnerList,
+  reactivateSubscription,
 } from "../../packages/ts/src/gateway";
 import type { FikashopClient } from "../../packages/ts/src/client";
 
@@ -105,6 +107,56 @@ describe("gateway subscription paths", () => {
     expect(FikashopGatewayPaths.usageById("sub-uuid")).toBe(
       "/subscriptions/api/subscriptions/usage-by-id/sub-uuid/",
     );
+  });
+
+  it("exposes cancel and reactivate paths", () => {
+    expect(FikashopGatewayPaths.cancel).toBe(
+      "/subscriptions/api/subscriptions/cancel/",
+    );
+    expect(FikashopGatewayPaths.reactivate).toBe(
+      "/subscriptions/api/subscriptions/reactivate/",
+    );
+  });
+
+  it("cancelSubscription defaults to at_period_end mode", async () => {
+    let capturedUrl: unknown;
+    let capturedBody: unknown;
+    const client = {
+      post: async (url: string, body?: unknown) => {
+        capturedUrl = url;
+        capturedBody = body;
+        return { ok: true, data: {} };
+      },
+    } as unknown as FikashopClient;
+
+    await cancelSubscription(client, "sub-uuid");
+    expect(capturedUrl).toBe("/subscriptions/api/subscriptions/cancel/");
+    expect(capturedBody).toEqual({
+      subscription_id: "sub-uuid",
+      mode: "at_period_end",
+    });
+
+    await cancelSubscription(client, "sub-uuid", "immediate");
+    expect(capturedBody).toEqual({
+      subscription_id: "sub-uuid",
+      mode: "immediate",
+    });
+  });
+
+  it("reactivateSubscription posts subscription_id", async () => {
+    let capturedUrl: unknown;
+    let capturedBody: unknown;
+    const client = {
+      post: async (url: string, body?: unknown) => {
+        capturedUrl = url;
+        capturedBody = body;
+        return { ok: true, data: {} };
+      },
+    } as unknown as FikashopClient;
+
+    await reactivateSubscription(client, "sub-uuid");
+    expect(capturedUrl).toBe("/subscriptions/api/subscriptions/reactivate/");
+    expect(capturedBody).toEqual({ subscription_id: "sub-uuid" });
   });
 
   it("checkFeatureAccess passes subscription_id and subscribed_partner query params", async () => {
